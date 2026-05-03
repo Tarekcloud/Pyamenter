@@ -110,6 +110,46 @@ class Stripe extends Gateway
                 'required' => false,
                 'database_type' => 'boolean',
             ],
+            [
+                'name' => 'stripe_currency_conversion',
+                'label' => 'Enable Currency Conversion',
+                'type' => 'checkbox',
+                'description' => 'Enable to convert invoice currency to a different currency for payment.',
+                'required' => false,
+                'database_type' => 'boolean',
+            ],
+            [
+                'name' => 'stripe_conversion_currency',
+                'label' => 'Target Currency Code',
+                'placeholder' => 'USD',
+                'type' => 'text',
+                'description' => 'The currency code to convert to (e.g. USD, EUR).',
+                'required' => false,
+            ],
+            [
+                'name' => 'stripe_conversion_rate',
+                'label' => 'Exchange Rate',
+                'placeholder' => '7.1',
+                'type' => 'text',
+                'description' => 'The exchange rate (e.g. 1 USD = 7.1 CNY).',
+                'required' => false,
+            ],
+            [
+                'name' => 'stripe_fee_percent',
+                'label' => 'Percentage Fee (%)',
+                'placeholder' => '3.5',
+                'type' => 'text',
+                'description' => 'Percentage fee added to the total amount (calculated on target currency).',
+                'required' => false,
+            ],
+            [
+                'name' => 'stripe_fee_fixed',
+                'label' => 'Fixed Fee',
+                'placeholder' => '0.30',
+                'type' => 'text',
+                'description' => 'Fixed fee added to the total amount (in target currency).',
+                'required' => false,
+            ],
         ];
     }
 
@@ -170,12 +210,94 @@ class Stripe extends Gateway
 
     public function pay($invoice, $total)
     {
+        $currency = $invoice->currency_code;
+        $amount = $total;
+        $metadata = [
+            'invoice_id' => $invoice->id,
+            'original_amount' => $total, // Store exact original amount for accurate callback
+        ];
+
+        // 1. Currency Conversion Logic
+        if ($this->config('stripe_currency_conversion') && $this->config('stripe_conversion_currency') && $this->config('stripe_conversion_rate')) {
+            $currency = strtoupper($this->config('stripe_conversion_currency'));
+            $rate = (float) $this->config('stripe_conversion_rate');
+            
+            // Calculate new amount: Invoice Amount / Rate = Target Amount
+            if ($rate > 0) {
+                $amount = $total / $rate;
+            }
+            
+            $metadata['exchange_rate'] = $rate;
+            $metadata['original_currency'] = $invoice->currency_code;
+        }
+
+        // 2. Fee Calculation
+        $fee = 0;
+        
+        // Add Percentage Fee
+        if ($this->config('stripe_fee_percent') && is_numeric($this->config('stripe_fee_percent'))) {
+            $fee += $amount * ((float)$this->config('stripe_fee_percent') / 100);
+        }
+
+        // Add Fixed Fee
+        if ($this->config('stripe_fee_fixed') && is_numeric($this->config('stripe_fee_fixed'))) {
+            $fee += (float)$this->config('stripe_fee_fixed');
+        }
+
+        // Store fee in metadata to subtract it later
+        if ($fee > 0) {
+            $metadata['payment_fee'] = $fee;
+        }
+
+        // Final amount to charge user
+        $totalToCharge = $amount + $fee;
+
+        // Get or Create Customer to attach to PaymentIntent
+        $user = $invoice->user;
+        $stripeCustomerId = $user->properties->where('key', 'stripe_id')->first();
+
+        // Customer Data (including Address)
+        $customerData = [
+            'email' => $user->email,
+            'name' => $user->name,
+            'metadata' => ['user_id' => $user->id],
+            'address' => [
+                'line1' => $user->address,
+                'city' => $user->city,
+                'state' => $user->state,
+                'postal_code' => $user->zip,
+                'country' => $user->country,
+            ],
+        ];
+
+        if (!$stripeCustomerId) {
+            // Create new customer
+            $customer = $this->request('post', '/customers', $customerData);
+            $user->properties()->updateOrCreate(['key' => 'stripe_id'], ['value' => $customer->id]);
+        } else {
+            // Check if existing customer is valid
+            try {
+                $customer = $this->request('get', '/customers/' . $stripeCustomerId->value);
+                if (isset($customer->deleted)) {
+                    // Re-create if deleted
+                    $customer = $this->request('post', '/customers', $customerData);
+                    $user->properties()->updateOrCreate(['key' => 'stripe_id'], ['value' => $customer->id]);
+                }
+            } catch (Exception $e) {
+                // Create if not found
+                $customer = $this->request('post', '/customers', $customerData);
+                $user->properties()->updateOrCreate(['key' => 'stripe_id'], ['value' => $customer->id]);
+            }
+        }
+
         $intent = $this->request('post', '/payment_intents', [
             'description' => __('invoices.payment_for_invoice', ['number' => $invoice->number ?? $invoice->id]),
-            'amount' => $total * 100,
-            'currency' => $invoice->currency_code,
+            'amount' => round($totalToCharge * 100), // Stripe expects integer cents
+            'currency' => $currency,
+            'customer' => $customer->id, // Attach customer
+            'receipt_email' => $user->email, // Send receipt email
             'automatic_payment_methods' => ['enabled' => 'true'],
-            'metadata' => ['invoice_id' => $invoice->id],
+            'metadata' => $metadata,
         ]);
 
         // Pay the invoice using Stripe
@@ -197,7 +319,8 @@ class Stripe extends Gateway
                 if (!isset($paymentIntent->metadata->invoice_id)) {
                     break;
                 }
-                ExtensionHelper::addProcessingPayment($paymentIntent->metadata->invoice_id, 'Stripe', $paymentIntent->amount / 100, null, $paymentIntent->id);
+                $amount = $this->getAmountFromIntent($paymentIntent);
+                ExtensionHelper::addProcessingPayment($paymentIntent->metadata->invoice_id, 'Stripe', $amount, null, $paymentIntent->id);
                 break;
                 // Normal payment
             case 'payment_intent.succeeded':
@@ -205,14 +328,16 @@ class Stripe extends Gateway
                 if (!isset($paymentIntent->metadata->invoice_id)) {
                     break;
                 }
-                ExtensionHelper::addPayment($paymentIntent->metadata->invoice_id, 'Stripe', $paymentIntent->amount / 100, null, $paymentIntent->id);
+                $amount = $this->getAmountFromIntent($paymentIntent);
+                ExtensionHelper::addPayment($paymentIntent->metadata->invoice_id, 'Stripe', $amount, null, $paymentIntent->id);
                 break;
             case 'payment_intent.payment_failed':
                 $paymentIntent = $event->data->object; // contains a StripePaymentIntent
                 if (!isset($paymentIntent->metadata->invoice_id)) {
                     break;
                 }
-                ExtensionHelper::addFailedPayment($paymentIntent->metadata->invoice_id, 'Stripe', $paymentIntent->amount / 100, null, $paymentIntent->id);
+                $amount = $this->getAmountFromIntent($paymentIntent);
+                ExtensionHelper::addFailedPayment($paymentIntent->metadata->invoice_id, 'Stripe', $amount, null, $paymentIntent->id);
                 break;
             case 'charge.updated':
                 $charge = $event->data->object; // contains a StripeCharge
@@ -225,6 +350,12 @@ class Stripe extends Gateway
                 if ($charge->balance_transaction) {
                     $balanceTransaction = $this->request('get', '/balance_transactions/' . $charge->balance_transaction);
                     $fee = $balanceTransaction->fee / 100;
+                    
+                    // If currency conversion was used, the fee is in the target currency (e.g., USD).
+                    // Convert back to original currency for logging
+                    if (isset($charge->metadata->exchange_rate) && (float)$charge->metadata->exchange_rate > 0) {
+                         $fee = $fee * (float)$charge->metadata->exchange_rate;
+                    }
                 }
                 ExtensionHelper::addPaymentFee($charge->payment_intent, $fee);
 
@@ -289,6 +420,35 @@ class Stripe extends Gateway
         }
 
         http_response_code(200);
+    }
+
+    /**
+     * Helper to calculate the amount to credit the invoice.
+     * Subtracts fees first, then reverses currency conversion.
+     */
+    private function getAmountFromIntent($paymentIntent)
+    {
+        // 0. Use Original Amount if available (Fixes rounding issues)
+        if (isset($paymentIntent->metadata->original_amount)) {
+            return (float) $paymentIntent->metadata->original_amount;
+        }
+
+        $amount = $paymentIntent->amount / 100;
+
+        // 1. Subtract Payment Fee (Extra Charge) if it exists
+        // We only want to credit the invoice for the original amount, not the surcharge.
+        if (isset($paymentIntent->metadata->payment_fee) && (float)$paymentIntent->metadata->payment_fee > 0) {
+            $amount -= (float)$paymentIntent->metadata->payment_fee;
+        }
+
+        // 2. Reverse Currency Conversion
+        if (isset($paymentIntent->metadata->exchange_rate) && (float)$paymentIntent->metadata->exchange_rate > 0) {
+            $rate = (float)$paymentIntent->metadata->exchange_rate;
+            // Reverse calculation: USD Amount * Rate = Original Currency Amount
+            $amount = $amount * $rate;
+        }
+
+        return $amount;
     }
 
     private function setupSubscription($setupIntent)
@@ -523,12 +683,21 @@ class Stripe extends Gateway
         // We create a SetupIntent and return the client secret to the frontend
         $stripeCustomerId = $user->properties->where('key', 'stripe_id')->first();
         // Create customer if not exists
+        $customerData = [
+            'email' => $user->email,
+            'name' => $user->name,
+            'metadata' => ['user_id' => $user->id],
+            'address' => [
+                'line1' => $user->address,
+                'city' => $user->city,
+                'state' => $user->state,
+                'postal_code' => $user->zip,
+                'country' => $user->country,
+            ],
+        ];
+
         if (!$stripeCustomerId) {
-            $customer = $this->request('post', '/customers', [
-                'email' => $user->email,
-                'name' => $user->name,
-                'metadata' => ['user_id' => $user->id],
-            ]);
+            $customer = $this->request('post', '/customers', $customerData);
             $user->properties()->updateOrCreate(['key' => 'stripe_id'], ['value' => $customer->id]);
         } else {
             try {
@@ -541,11 +710,7 @@ class Stripe extends Gateway
                 $customer = null;
             }
             if (!$customer) {
-                $customer = $this->request('post', '/customers', [
-                    'email' => $user->email,
-                    'name' => $user->name,
-                    'metadata' => ['user_id' => $user->id],
-                ]);
+                $customer = $this->request('post', '/customers', $customerData);
                 $user->properties()->updateOrCreate(['key' => 'stripe_id'], ['value' => $customer->id]);
             }
         }
@@ -701,23 +866,65 @@ class Stripe extends Gateway
             $customer = $this->request('get', '/customers/' . $stripeCustomerId->value);
         }
 
+        // Prepare currency and amount variables
+        $currency = $invoice->currency_code;
+        $chargeAmount = $amount;
+        $metadata = [
+            'invoice_id' => $invoice->id,
+            'billing_agreement_id' => $billingAgreement->id,
+            'original_amount' => $amount, // Store exact original amount
+        ];
+
+        // 1. Currency Conversion Logic for Auto Charge
+        if ($this->config('stripe_currency_conversion') && $this->config('stripe_conversion_currency') && $this->config('stripe_conversion_rate')) {
+            $currency = strtoupper($this->config('stripe_conversion_currency'));
+            $rate = (float) $this->config('stripe_conversion_rate');
+            
+            // Calculate new amount: Invoice Amount / Rate = Target Amount
+            if ($rate > 0) {
+                $chargeAmount = $amount / $rate;
+            }
+            
+            // Store conversion details
+            $metadata['exchange_rate'] = $rate;
+            $metadata['original_currency'] = $invoice->currency_code;
+        }
+
+        // 2. Fee Calculation
+        $fee = 0;
+        // Add Percentage Fee
+        if ($this->config('stripe_fee_percent') && is_numeric($this->config('stripe_fee_percent'))) {
+            $fee += $chargeAmount * ((float)$this->config('stripe_fee_percent') / 100);
+        }
+        // Add Fixed Fee
+        if ($this->config('stripe_fee_fixed') && is_numeric($this->config('stripe_fee_fixed'))) {
+            $fee += (float)$this->config('stripe_fee_fixed');
+        }
+        
+        // Store fee in metadata to subtract it later
+        if ($fee > 0) {
+            $metadata['payment_fee'] = $fee;
+            $chargeAmount += $fee;
+        }
+
         // Create payment intent
         try {
             $intent = $this->request('post', '/payment_intents', [
-                'amount' => $amount * 100,
-                'currency' => $invoice->currency_code,
+                'amount' => round($chargeAmount * 100), // Convert to cents
+                'currency' => $currency,
                 'customer' => $customer->id,
+                'receipt_email' => $user->email, // Send receipt email
                 'payment_method' => $billingAgreement->external_reference,
                 'off_session' => 'true',
                 'confirm' => 'true',
-                'metadata' => ['invoice_id' => $invoice->id, 'billing_agreement_id' => $billingAgreement->id],
+                'metadata' => $metadata,
             ]);
         } catch (Exception $e) {
             if ($e instanceof \Illuminate\Http\Client\RequestException && $e->response->status() === 400) {
                 $error = $e->response->object()->error;
                 // If error is invalid_request_error and message contains "The provided currency" we can show the message
                 if ($error->type === 'invalid_request_error' && Str::contains($error->message, 'The currency provided')) {
-                    throw new DisplayException('Cannot charge the billing agreement because the card does not support the invoice currency (' . $invoice->currency_code . '). Please use another payment method.');
+                    throw new DisplayException('Cannot charge the billing agreement because the card does not support the invoice currency (' . $currency . '). Please use another payment method.');
                 }
             }
             throw new DisplayException('Could not process payment');

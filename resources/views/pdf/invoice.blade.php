@@ -145,9 +145,9 @@
         <thead>
             <tr>
                 <th>{{ __('invoices.item') }}</th>
-                <th style="width: 100px">{{ __('invoices.quantity') }}</th>
-                <th>{{ __('invoices.unit_price') }}</th>
-                <th>{{ __('invoices.total') }}</th>
+                <th style="width: 120px">{{ __('invoices.quantity') }}</th>
+                <th style="width: 100px">{{ __('invoices.unit_price') }}</th>
+                <th style="width: 100px">{{ __('invoices.total') }}</th>
             </tr>
         </thead>
         <tbody>

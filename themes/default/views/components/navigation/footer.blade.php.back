@@ -1,0 +1,130 @@
+<footer class="w-full px-4 py-4 lg:mt-72 mt-44 bg-background-secondary border-t border-neutral">
+    <div class="container my-12 mx-auto px-4 sm:px-6 md:px-8 lg:px-10">
+        <!-- 修改了 gap 设置，让手机端上下间距稍微大一点 -->
+        <div class="flex flex-col md:flex-row justify-between gap-8 md:gap-2">
+            
+            <!-- 第一列：Fast Links (添加了图标) -->
+            <div class="md:col-span-3 flex flex-col gap-4">
+                <h3 class="text-lg font-bold text-base-content">Fast Links</h3>
+                <div class="flex flex-col gap-3">
+                    <!-- Looking Glass: 放大镜图标 -->
+                    <a href="https://lg.altarek.cloud" class="flex items-center gap-2 text-sm text-base/70 hover:text-primary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        Datacenters
+                    </a>
+
+                    <!-- Network Status: 脉冲/心跳 -->
+               <!--     <a href="https://tarekcloud.instatus.com" class="flex items-center gap-2 text-sm text-base/70 hover:text-primary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                        Network Status
+                    </a> -->
+
+                    <!-- LIR Service: 地球图标 (新增) -->
+                    <a href="https://www.tarekcloud.com/lir/" class="flex items-center gap-2 text-sm text-base/70 hover:text-primary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        LIR Service
+                    </a>
+                    
+                    <!-- Privacy Policy: 盾牌图标 -->
+                    <a href="https://www.tarekcloud.com/privacy-policy" class="flex items-center gap-2 text-sm text-base/70 hover:text-primary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                        </svg>
+                        Privacy Policy
+                    </a>
+
+                    <!-- Terms of Service: 文档图标 -->
+                    <a href="https://www.tarekcloud.com/terms-of-service" class="flex items-center gap-2 text-sm text-base/70 hover:text-primary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" x2="8" y1="13" y2="13"/>
+                            <line x1="16" x2="8" y1="17" y2="17"/>
+                            <line x1="10" x2="8" y1="9" y2="9"/>
+                        </svg>
+                        Terms of Service
+                    </a>
+                </div>
+            </div>
+
+            <!-- 第二列：Contact Info -->
+              <div class="md:col-span-5 flex flex-col gap-4">
+                <h3 class="text-lg font-bold text-base-content">Contact Info</h3>
+                <div class="flex flex-col gap-4">
+                    
+                    <!-- 地址 -->
+                    <div class="flex items-start gap-3 text-sm text-base/70">
+                        <!-- Location Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0 mt-0.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span>ROOM 1804 BEVERLY HOUSE, 93-107 LOCKHART ROAD, </br>WAN CHAI, HONG KONG</span> 
+                       <!-- <span>30 N Gould St Ste N, Sheridan, WY 82801 US</span>-->
+                    </div>
+
+                    <!-- 电话 -->
+                    <div class="flex items-center gap-3 text-sm text-base/70">
+                        <!-- Phone Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                        <span>+852 53379849</span>
+                    </div>
+
+                    <!-- 邮箱 -->
+                    <a href="mailto:custom@tarekcloud.com" class="flex items-center gap-3 text-sm text-base/70 hover:text-primary transition-colors">
+                        <!-- Mail Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="20" height="16" x="2" y="4" rx="2"/>
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                        </svg>
+                        <span>custom@tarekcloud.com</span>
+                    </a>
+
+                    <!-- 社交链接区域 -->
+                    <!--    <div class="flex flex-wrap gap-4 mt-2">
+                        <!-- Telegram -->
+                    <!--      <a href="https://t.me/tarekgroup" target="_blank" class="flex items-center gap-2 text-sm text-base/70 hover:text-primary transition-colors border border-neutral/50 rounded-lg px-3 py-1.5 bg-base-200/50">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-[#2AABEE]">
+                                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 11.944 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                            </svg>
+                            <span>Telegram</span>
+                        </a>  -->
+
+                        <!-- QQ Group (Penguin Icon) -->
+                    <!--      <a href="https://qm.qq.com/q/9e2OsEx7La" target="_blank" class="flex items-center gap-2 text-sm text-base/70 hover:text-primary transition-colors border border-neutral/50 rounded-lg px-3 py-1.5 bg-base-200/50">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.486 2 2 6.486 2 12c0 5.514 4.486 10 10 10s10-4.486 10-10c0-5.514-4.486-10-10-10zm2.257 14.887a.998.998 0 0 1-.225 1.488c-1.363 1.04-3.001 1.04-4.364 0a.999.999 0 1 1 1.226-1.609c.683.521 1.514.521 2.198 0 .424-.323 1.036-.248 1.359.176l-.194-.055zm.801-4.735c.484 1.708-.431 3.42-1.802 3.843-1.626.502-3.351-.431-3.853-2.057-.15-.487-.202-.976-.176-1.455.021-.409-.136-.814-.429-1.109l-1.025-1.025c-.391-.391-.391-1.023 0-1.414.391-.391 1.023-.391 1.414 0l.545.545c.422.422 1.076.495 1.579.176 1.002-.635 2.302-.505 3.167.36.865.865.995 2.165.36 3.167-.319.503-.246 1.157.176 1.579l.545.545c.391.391 1.023.391 1.414 0 .391-.391.391-1.023 0-1.414l-1.025-1.025c-.295-.293-.45-.699-.429-1.109.026-.479-.026-.968-.176-1.455z"/>
+                            </svg>
+                            <span>QQ Group</span>
+                        </a>
+                    </div>   -->
+                </div>
+            </div>
+
+            <!-- 第三列：Logo 和 版权信息 -->
+            <div class="flex flex-col gap-6 items-start">
+                <div class="flex flex-row gap-2">
+                    <x-logo class="h-10" />
+                    @if(theme('logo_display', 'logo-and-name') != 'logo-only')
+               <!--     <span class="text-xl font-bold leading-none flex items-center">{{ config('app.name') }}</span> -->
+                    @endif
+                </div>
+                
+                <div class="text-sm text-base/70">
+                    {{ __('Copyright © :year TarekCLoud. All rights reserved.', ['year' => date('Y'), 'app_name' => config('app.name')]) }}
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</footer>

@@ -94,8 +94,8 @@ class GiftResource extends Resource
                     ->numeric()
                     ->minValue(0)
                     ->step(0.01)
-                    ->visible(fn (Get $get) => $get('type') === 'credit' && !$get('allow_credit_range'))
-                    ->required(fn (Get $get) => $get('type') === 'credit' && !$get('allow_credit_range'))
+                    ->visible(fn (Get $get) => $get('type') === 'credit' && !$get('allow_credit_range') && !$get('is_random_credit'))
+                    ->required(fn (Get $get) => $get('type') === 'credit' && !$get('allow_credit_range') && !$get('is_random_credit'))
                     ->placeholder('Enter the credit amount'),
 
                 TextInput::make('credit_min_amount')
@@ -103,23 +103,30 @@ class GiftResource extends Resource
                     ->numeric()
                     ->minValue(0)
                     ->step(0.01)
-                    ->visible(fn (Get $get) => $get('type') === 'credit' && $get('allow_credit_range'))
-                    ->required(fn (Get $get) => $get('type') === 'credit' && $get('allow_credit_range')),
+                    ->visible(fn (Get $get) => $get('type') === 'credit' && ($get('allow_credit_range') || $get('is_random_credit')))
+                    ->required(fn (Get $get) => $get('type') === 'credit' && ($get('allow_credit_range') || $get('is_random_credit'))),
 
                 TextInput::make('credit_max_amount')
                     ->label('Maximum Credit Amount')
                     ->numeric()
                     ->minValue(0)
                     ->step(0.01)
-                    ->visible(fn (Get $get) => $get('type') === 'credit' && $get('allow_credit_range'))
-                    ->required(fn (Get $get) => $get('type') === 'credit' && $get('allow_credit_range')),
+                    ->visible(fn (Get $get) => $get('type') === 'credit' && ($get('allow_credit_range') || $get('is_random_credit')))
+                    ->required(fn (Get $get) => $get('type') === 'credit' && ($get('allow_credit_range') || $get('is_random_credit'))),
 
                 Toggle::make('allow_credit_range')
                     ->label('Allow Credit Range')
                     ->default(false)
                     ->live()
-                    ->visible(fn (Get $get) => $get('type') === 'credit')
+                    ->visible(fn (Get $get) => $get('type') === 'credit' && !$get('is_random_credit'))
                     ->helperText('Let users choose an amount within the range'),
+
+                Toggle::make('is_random_credit')
+                    ->label('Random Credit Amount')
+                    ->default(false)
+                    ->live()
+                    ->visible(fn (Get $get) => $get('type') === 'credit' && !$get('allow_credit_range'))
+                    ->helperText('Automatically assign a random credit amount between Min and Max'),
 
                 Select::make('currency_code')
                     ->label('Currency')

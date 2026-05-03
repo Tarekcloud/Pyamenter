@@ -1,0 +1,593 @@
+<?php
+
+namespace Paymenter\Extensions\Servers\Virtualizor;
+
+use App\Classes\Extension\Server;
+use App\Models\Product;
+use App\Models\Service;
+use App\Models\User;
+use Exception;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+class Virtualizor extends Server
+{
+    private function request($act, $method = 'get', $data = [], $clientApi = false): array
+    {
+        if ($clientApi) {
+            $url = 'https://' . $this->config('ip') . ':' . $this->config('client_port') . '/index.php?api=json&adminapikey=' . $this->config('key') . '&adminapipass=' . $this->config('password') . '&act=' . $act;
+        } else {
+            $url = 'https://' . $this->config('ip') . ':' . $this->config('port') . '/index.php?api=json&adminapikey=' . $this->config('key') . '&adminapipass=' . $this->config('password') . '&act=' . $act;
+        }
+
+        if ($method == 'get') {
+            $url .= '&' . http_build_query($data);
+            $response = Http::withoutVerifying()->get($url)->throw();
+        } elseif ($method == 'post') {
+            $response = Http::withoutVerifying()->asForm()->$method($url, $data)->throw();
+        }
+
+        if (!$response->successful()) {
+            throw new Exception('Failed to connect to Virtualizor API');
+        }
+
+        return $response->json();
+    }
+
+    /**
+     * Get all the configuration for the extension
+     *
+     * @param  array  $values
+     */
+    public function getConfig($values = []): array
+    {
+        return [
+            [
+                'name' => 'key',
+                'type' => 'text',
+                'label' => 'API Key',
+                'required' => true,
+            ],
+            [
+                'name' => 'password',
+                'type' => 'text',
+                'label' => 'API Password',
+                'required' => true,
+            ],
+            [
+                'name' => 'ip',
+                'type' => 'text',
+                'label' => 'IP Address',
+                'required' => true,
+            ],
+            [
+                'name' => 'port',
+                'type' => 'text',
+                'label' => 'Port',
+                'required' => true,
+                'default' => '4085',
+            ],
+            [
+                'name' => 'client_port',
+                'type' => 'text',
+                'label' => 'Client Port (normally 4083)',
+                'default' => '4083',
+                'required' => true,
+            ],
+        ];
+    }
+
+    /**
+     * Get product config
+     *
+     * @param  array  $values
+     */
+    public function getProductConfig($values = []): array
+    {
+        // Get Plan list
+        $allplans = [];
+        try {
+            $plans = $this->request('plans');
+            if (!empty($plans['plans'])) {
+                foreach ($plans['plans'] as $plan) {
+                    $allplans[$plan['plan_name']] = $plan['plan_name'];
+                }
+            }
+        } catch (Exception $e) {
+            $allplans[''] = 'Error fetching plans: ' . $e->getMessage();
+        }
+
+        // 拉取宿主机列表
+        $serverOptions = [
+            '__auto__' => 'Auto (由Virtualizor自动选择节点)'
+        ];
+        try {
+            $servers = $this->request('servers');
+            if (!empty($servers['servers'])) {
+                foreach ($servers['servers'] as $s) {
+                    $label = sprintf('#%s | %s | virt=%s | ip=%s',
+                        $s['serid'] ?? 'n/a',
+                        $s['server_name'] ?? 'unknown',
+                        $s['virt'] ?? 'n/a',
+                        $s['ip'] ?? '-'
+                    );
+                    $serverOptions[(string)($s['serid'] ?? '')] = $label;
+                }
+            }
+        } catch (Exception $e) {
+            // Ignore server fetch error
+        }
+
+        // 拉取存储列表 (Storage)
+        $storageOptions = [
+            '' => 'Auto (Use Node Default / Plan Default)'
+        ];
+        try {
+            $storageResp = $this->request('storage', 'get', ['page' => 1, 'reslen' => 1000]);
+            if (!empty($storageResp['storage'])) {
+                foreach ($storageResp['storage'] as $st) {
+                    $stid = (string)($st['stid'] ?? '');
+                    $sName = $st['name'] ?? 'Unknown';
+                    $sSize = $st['size'] ?? '-';
+                    $sFree = $st['free'] ?? '-';
+                    
+                    if ($stid) {
+                        $storageOptions[$stid] = "ID: {$stid} - {$sName} (Size: {$sSize}GB, Free: {$sFree}GB)";
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $storageOptions[''] = 'API Error fetching storage: ' . $e->getMessage();
+        }
+
+
+        // 拉取 IP Pool 列表
+        // 修改：默认增加 "None" 选项
+        $v4Pools = [
+            '' => 'None / Use Plan Default (不指定 IPv4 池)'
+        ];
+        $poolListInfo = "Pool List could not be fetched.";
+        
+        try {
+            $poolResponse = $this->request('ippool', 'get', ['page' => 1, 'reslen' => 1000]);
+            $debugPools = []; 
+            
+            if (!empty($poolResponse['ippools'])) {
+                foreach ($poolResponse['ippools'] as $pool) {
+                    $pName = $pool['ippool_name'] ?? 'Unknown';
+                    $pGateway = $pool['gateway'] ?? '-';
+                    $name = "ID: {$pool['ippid']} - {$pName} ({$pGateway})";
+                    
+                    if (isset($pool['ipv6']) && $pool['ipv6'] == 1) {
+                        $debugPools[] = "[IPv6] " . $name;
+                    } else {
+                        $v4Pools[$pool['ippid']] = $name;
+                        $debugPools[] = "[IPv4] " . $name;
+                    }
+                }
+                $poolListInfo = implode(', ', $debugPools);
+            }
+        } catch (Exception $e) {
+            // 如果出错，保留 None 选项并追加错误信息
+            $v4Pools['error'] = 'API Error: ' . $e->getMessage();
+        }
+
+        $virtOptions = [];
+        try {
+            $config = $this->request('config');
+            $virtOptions = $config['globals']['virts'] ?? ['kvm' => 'KVM', 'openvz' => 'OpenVZ'];
+        } catch (Exception $e) {
+            $virtOptions = ['kvm' => 'KVM (API Error)', 'openvz' => 'OpenVZ'];
+        }
+
+        return [
+            [
+                'name' => 'virt',
+                'label' => 'Virtualizon Type',
+                'type' => 'select',
+                'required' => true,
+                'options' => $virtOptions,
+            ],
+            [
+                'name' => 'planname',
+                'label' => 'Plan Name',
+                'type' => 'select',
+                'required' => true,
+                'options' => $allplans,
+            ],
+            [
+                'name' => 'serverid',
+                'label' => 'Server（宿主机，可选）',
+                'type' => 'select',
+                'required' => false,
+                'options' => $serverOptions,
+                'default' => '__auto__',
+                'description' => '选择具体宿主机。默认 Auto 由Virtualizor分配。'
+            ],
+            [
+                'name' => 'conf_storage_id',
+                'label' => 'Storage (存储, 可选)',
+                'type' => 'select',
+                'required' => false,
+                'options' => $storageOptions,
+                'description' => '指定 VPS 创建时使用的存储设备。留空则使用默认设置。'
+            ],
+            // 修改：IPv4 Pool 设置为非必选 (required => false)
+            [
+                'name' => 'conf_ipv4_pool',
+                'label' => 'IPv4 Pool (Optional)',
+                'type' => 'select',
+                'required' => false,
+                'options' => $v4Pools,
+                'description' => '选择固定的 IPv4 Pool。如果选择 None，则使用 Virtualizor 默认设置。'
+            ],
+            [
+                'name' => 'conf_ipv6_pools',
+                'label' => 'Allowed IPv6 Pool IDs (Optional)',
+                'type' => 'text',
+                'required' => false,
+                'description' => '输入允许用户选择的 IPv6 Pool ID，用逗号分隔。参考列表: ' . $poolListInfo
+            ]
+        ];
+    }
+
+    public function getCheckoutConfig(Product $product)
+    {
+        $virt = $product->settings()->where('key', 'virt')->first()->value;
+        $planName = $product->settings()->where('key', 'planname')->first()->value;
+
+        $plansResp = $this->request('plans', 'get', [
+            'planname' => $planName,
+            'ptype'    => $virt,
+        ]);
+
+        if (empty($plansResp['plans'])) {
+            throw new Exception('未找到匹配的 Virtualizor 计划');
+        }
+
+        $plan = $plansResp['plans'][key($plansResp['plans'])];
+        $allowedMgs = [];
+        if (!empty($plan['mgs'])) {
+            $allowedMgs = array_filter(array_map('intval', explode(',', $plan['mgs'])));
+        }
+
+        $osResp = $this->request('ostemplates');
+
+        if (!isset($osResp['oslist'][$virt])) {
+            throw new Exception('该虚拟化类型下没有可用的 OS 模板');
+        }
+
+        $allOs = [];
+        foreach ($osResp['oslist'][$virt] as $distro => $items) {
+            foreach ($items as $osId => $meta) {
+                $name = $meta['name'] ?? ($meta['filename'] ?? (string)$osId);
+                if (!empty($allowedMgs)) {
+                    $mgList = isset($meta['mg']) && is_array($meta['mg']) ? array_map('intval', $meta['mg']) : [];
+                    $inter  = array_intersect($allowedMgs, $mgList);
+                    if (empty($inter)) {
+                        continue; 
+                    }
+                }
+                $allOs[$osId] = $name;
+            }
+        }
+
+        if (empty($allOs) && !empty($allowedMgs)) {
+            if (!empty($plan['osid'])) {
+                $defaultOsId = (string)$plan['osid'];
+                $defaultName = null;
+                foreach ($osResp['oslist'][$virt] as $distro => $items) {
+                    if (isset($items[$defaultOsId])) {
+                        $defaultName = $items[$defaultOsId]['name'] ?? $items[$defaultOsId]['filename'] ?? $defaultOsId;
+                        break;
+                    }
+                }
+                if ($defaultName) {
+                    $allOs[$defaultOsId] = $defaultName;
+                }
+            }
+        }
+
+        $fields = [
+            [
+                'name' => 'hostname',
+                'type' => 'text',
+                'validation' => 'regex:/^[a-z0-9]+\.[a-z0-9]+$/',
+                'label' => 'Hostname',
+                'placeholder' => 'example.com',
+                'required' => true,
+            ],
+            [
+                'name' => 'os',
+                'type' => 'select',
+                'friendlyName' => 'Operating System',
+                'label' => 'Operating system',
+                'required' => true,
+                'options' => $allOs,
+            ],
+        ];
+
+        $confIpv6Setting = $product->settings()->where('key', 'conf_ipv6_pools')->first();
+        
+        if ($confIpv6Setting && !empty($confIpv6Setting->value)) {
+            $allowedV6Ids = array_filter(array_map('trim', explode(',', $confIpv6Setting->value)));
+            
+            if (!empty($allowedV6Ids)) {
+                $userV6Options = []; 
+                try {
+                    $poolResponse = $this->request('ippool', 'get', ['page' => 1, 'reslen' => 1000]);
+                    if (!empty($poolResponse['ippools'])) {
+                        foreach ($poolResponse['ippools'] as $pool) {
+                            $pid = (string)$pool['ippid'];
+                            if (isset($pool['ipv6']) && $pool['ipv6'] == 1 && in_array($pid, $allowedV6Ids)) {
+                                $pName = $pool['ippool_name'] ?? 'Unknown';
+                                $userV6Options[$pid] = $pName . ' (' . ($pool['gateway'] ?? '-') . ')';
+                            }
+                        }
+                    }
+                } catch (Exception $e) {}
+
+                foreach ($allowedV6Ids as $vid) {
+                    if (!isset($userV6Options[$vid])) {
+                        $userV6Options[$vid] = "IPv6 Pool #$vid";
+                    }
+                }
+
+                if (count($userV6Options) > 0) {
+                    $fields[] = [
+                        'name' => 'user_selected_ipv6',
+                        'type' => 'select',
+                        'label' => 'Select IPv6',
+                        'required' => true,
+                        'options' => $userV6Options,
+                    ];
+                }
+            }
+        }
+
+        return $fields;
+    }
+
+
+    public function testConfig(): bool|string
+    {
+        try {
+            $this->request('users');
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
+        return true;
+    }
+
+    private function getUser(User $user)
+    {
+        $users = $this->request('users', data: ['email' => $user->email]);
+        if (!empty($users['users'])) {
+            return $users['users'][key($users['users'])];
+        }
+        $password = Str::password(16);
+        $data = [
+            'adduser' => 1,
+            'priority' => 0,
+            'newpass' => $password,
+            'newemail' => $user->email,
+            'fname' => $user->first_name,
+            'lname' => $user->last_name,
+        ];
+        $response = $this->request('adduser', 'post', $data);
+
+        if (!$response['done']) {
+            throw new Exception('Failed to create user');
+        }
+
+        $users = $this->request('users', data: ['email' => $user->email]);
+        $user = $users['users'][key($users['users'])];
+        $user['password'] = $password;
+
+        return $user;
+    }
+
+    public function createServer(Service $service, $settings, $properties)
+    {
+        $settings = array_merge($settings, $properties);
+        $data = [
+            'planname' => $settings['planname'],
+            'ptype' => $settings['virt'],
+        ];
+        $plans = $this->request('plans', 'get', $data);
+        if (empty($plans['plans'])) {
+            throw new Exception('Invalid plan OR Virtualization type');
+        }
+        $plan = $plans['plans'][key($plans['plans'])];
+        $password = Str::random(12);
+
+        $user = $this->getUser($service->user);
+        $isAutoNode = (!isset($settings['serverid']) || $settings['serverid'] === '__auto__' || $settings['serverid'] === '');
+
+        $targetPools = [];
+        // 如果 conf_ipv4_pool 选择了 None (空字符串)，这里 !empty 将为 false，不会加入 targetPools
+        if (!empty($settings['conf_ipv4_pool'])) {
+            $targetPools[] = trim($settings['conf_ipv4_pool']);
+        }
+
+        if (!empty($settings['user_selected_ipv6'])) {
+            $targetPools[] = $settings['user_selected_ipv6'];
+        }
+
+        // 如果 targetPools 为空，finalIpPoolId 为 null
+        $finalIpPoolId = !empty($targetPools) ? implode(',', $targetPools) : null;
+        $storageId = !empty($settings['conf_storage_id']) ? $settings['conf_storage_id'] : null;
+
+        $data = [
+            'addvps' => 1,
+            'node_select' => $isAutoNode ? 1 : 0, 
+            'virt' => $settings['virt'],
+            'uid' => $user['uid'],
+            'osid' => $settings['os'],
+            'hostname' => $settings['hostname'],
+            'rootpass' => $password,
+            'slave_server' => $isAutoNode ? null : $settings['serverid'],
+            'stid' => $storageId,
+
+            // 如果 finalIpPoolId 为 null，它将在下面的 array_filter 中被移除
+            'ippoolid' => $finalIpPoolId,
+
+            'num_ips6' => isset($settings['ips6']) ? $settings['ips6'] : $plan['ips6'],
+            'num_ips6_subnet' => isset($settings['ips6_subnet']) ? $settings['ips6_subnet'] : $plan['ips6_subnet'],
+            'num_ips' => isset($settings['ips']) ? $settings['ips'] : $plan['ips'],
+            'ram' => isset($settings['ram']) ? $settings['ram'] : $plan['ram'],
+            'swapram' => isset($settings['swap']) ? $settings['swap'] : $plan['swap'],
+            'bandwidth' => isset($settings['bandwidth']) ? $settings['bandwidth'] : $plan['bandwidth'],
+            'network_speed' => isset($settings['network_speed']) ? $settings['network_speed'] : $plan['network_speed'],
+            'cpu' => isset($settings['cpu']) ? $settings['cpu'] : $plan['cpu'],
+            'cores' => isset($settings['cores']) ? $settings['cores'] : $plan['cores'],
+            'cpu_percent' => isset($settings['cpu_percent']) ? $settings['cpu_percent'] : $plan['cpu_percent'],
+            'vnc' => isset($settings['vnc']) ? $settings['vnc'] : $plan['vnc'],
+            'kvm_cache' => $plan['kvm_cache'],
+            'io_mode' => $plan['io_mode'],
+            'vnc_keymap' => $plan['vnc_keymap'],
+            'nic_type' => $plan['nic_type'],
+            'osreinstall_limit' => isset($settings['osreinstall_limit']) ? $settings['osreinstall_limit'] : $plan['osreinstall_limit'],
+            'space' => isset($settings['space']) ? $settings['space'] : $plan['space'],
+            'plid' => $plan['plid'],
+        ];
+
+        // 核心：移除所有 null 值的键。如果 ippoolid 是 null，它将不会被发送。
+        $data = array_filter($data, function ($v) { return !is_null($v); });
+
+        $response = $this->request('addvs', 'post', $data);
+
+        if (isset($response['error']) && !empty($response['error'])) {
+            throw new Exception('Failed to create server with error: ' . implode(', ', $response['error']));
+        }
+
+        $service->properties()->updateOrCreate(['key' => 'server_id'], [
+            'name' => 'Virtualizor Server ID',
+            'value' => $response['newvs']['vpsid'],
+        ]);
+        
+        if ($storageId) {
+            $service->properties()->updateOrCreate(['key' => 'stid'], [
+                'name' => 'Storage ID',
+                'value' => $storageId,
+            ]);
+        }
+        
+        $response['newvs']['pass'] = $password;
+        return [
+            'vps' => $response['newvs'],
+            'user' => $user,
+        ];
+    }
+
+    public function suspendServer(Service $service, $settings, $properties)
+    {
+        if (!isset($properties['server_id'])) {
+            throw new Exception('Server does not exist');
+        }
+        $this->request('vs', 'get', ['suspend' => $properties['server_id']]);
+        return true;
+    }
+
+    public function unsuspendServer(Service $service, $settings, $properties)
+    {
+        if (!isset($properties['server_id'])) {
+            throw new Exception('Server does not exist');
+        }
+        $this->request('vs', 'get', ['unsuspend' => $properties['server_id']]);
+        return true;
+    }
+
+    public function terminateServer(Service $service, $settings, $properties)
+    {
+        if (!isset($properties['server_id'])) {
+            throw new Exception('Server does not exist');
+        }
+        $request = $this->request('vs', 'post', ['delete' => $properties['server_id']]);
+        if (empty($request['done']) || !$request['done']) {
+            throw new Exception('Failed to terminate server');
+        }
+        $service->properties()->where('key', 'server_id')->delete();
+        return true;
+    }
+
+    public function getActions(Service $service, $settings, $properties): array
+    {
+        if (!isset($properties['server_id'])) {
+            return [];
+        }
+        $hostname = $properties['hostname'] ?? $settings['hostname'] ?? 'Unknown';
+        $vpsId = $properties['server_id'];
+
+        return [
+            [
+                'type' => 'button',
+                'label' => 'Go Control Panel',
+                'function' => 'ssoLink',
+            ],
+            [
+                'type' => 'button',
+                'label' => 'Hostname: ' . $hostname,
+                'function' => 'displayOnly', 
+            ],
+            [
+                'type' => 'button',
+                'label' => 'VPS ID: ' . $vpsId,
+                'function' => 'displayOnly', 
+            ],
+        ];
+    }
+    
+    public function displayOnly(Service $service, $settings, $properties)
+    {
+        return null;
+    }
+
+    public function ssoLink(Service $service, $settings, $properties): string
+    {
+        if (!isset($properties['server_id'])) {
+            throw new Exception('Server does not exist');
+        }
+
+        $response = $this->request('sso', data: ['svs' => $properties['server_id']], clientApi: true);
+
+        if (!isset($response['sid'])) {
+            throw new Exception('Failed to get VNC link');
+        }
+
+        return 'https://' . $this->config('ip') . ':' . $this->config('client_port') . '/' . $response['token_key'] . '/?as=' . $response['sid'] . '&svs=' . $properties['server_id'];
+    }
+
+    public function upgradeServer(Service $service, $settings, $properties)
+    {
+        if (!isset($properties['server_id'])) {
+            throw new Exception('Server does not exist');
+        }
+
+        $settings = array_merge($settings, $properties);
+        $plans = $this->request('plans');
+        $plid = null;
+        foreach ($plans['plans'] as $plan) {
+            if ($plan['plan_name'] === $settings['planname']) {
+                $plid = $plan['plid'];
+                break;
+            }
+        }
+        if (!$plid) {
+            throw new Exception('Plan not found');
+        }
+
+        $editData = [
+            'vpsid' => $properties['server_id'],
+            'plid' => $plid,
+            'theme_edit' => 1,
+            'editvps' => 1,
+        ];
+
+        $response = $this->request('managevps', 'post', $editData);
+        if (empty($response['done'])) {
+            throw new Exception('Failed to upgrade server');
+        }
+        return true;
+    }
+}

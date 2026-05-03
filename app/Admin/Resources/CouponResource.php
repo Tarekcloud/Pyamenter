@@ -75,6 +75,19 @@ class CouponResource extends Resource
                         'setup_fee' => 'Setup Fee only',
                     ]),
 
+                // --- 新增：付款周期限制 (Billing Periods) ---
+                Select::make('billing_periods')
+                    ->label('Billing Periods Limit')
+                    ->multiple()
+                    ->options([
+                        'day' => 'Day (按天)',
+                        'week' => 'Week (按周)',
+                        'month' => 'Month (按月)',
+                        'year' => 'Year (按年)',
+                    ])
+                    ->placeholder('Select applicable billing periods (Leave empty for all)')
+                    ->helperText('留空则表示不限制付款周期，适用于所选产品的所有周期。'),
+
                 TextInput::make('recurring')
                     ->label('Recurring')
                     ->numeric()

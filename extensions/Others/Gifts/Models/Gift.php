@@ -26,6 +26,7 @@ class Gift extends Model
         'credit_min_amount',
         'credit_max_amount',
         'allow_credit_range',
+        'is_random_credit', // 新增：随机余额模式
         'currency_code',
         'currency_codes',
         'allow_currency_selection',
@@ -91,6 +92,7 @@ class Gift extends Model
         'allow_user_selection' => 'boolean',
         'allow_coupon_selection' => 'boolean',
         'allow_credit_range' => 'boolean',
+        'is_random_credit' => 'boolean', // 新增：随机余额模式
         'allow_currency_selection' => 'boolean',
         'allow_extension_range' => 'boolean',
         'allow_discount_range' => 'boolean',

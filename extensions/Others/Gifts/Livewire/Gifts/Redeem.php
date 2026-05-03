@@ -19,7 +19,7 @@ class Redeem extends Component
     public $gift = null;
     public $showSelection = false;
     public $autoRedeem = false;
-    
+
     public $selectedServiceId = null;
     public $selectedProductId = null;
     public $selectedPlanId = null;

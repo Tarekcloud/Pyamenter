@@ -1,14 +1,15 @@
 <div class="container mt-14">
     @if($invoice = $service->invoices()->where('status', 'pending')->first())
-    <div class="w-full mb-4">
-        <div class="bg-yellow-600/20 border-l-4 border-yellow-500 text-yellow-300 p-4 rounded-lg">
-            <p class="font-medium">
-                ⚠️ {{ __('services.outstanding_invoice') }}
-                <a href="{{ route('invoices.show', $invoice)}}"
-                    class="underline hover:text-yellow-100 underline-offset-2">{{ __('services.view_and_pay') }}</a>.
-            </p>
-        </div>
+<div class="w-full mb-4">
+    <div class="bg-yellow-600/20 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg">
+        <p class="font-medium">
+            ⚠️ {{ __('services.outstanding_invoice') }}
+            <a href="{{ route('invoices.show', $invoice)}}"
+                class="underline hover:text-yellow-900 underline-offset-2"> {{ __('services.view_and_pay') }}
+            </a>.
+        </p>
     </div>
+</div>
     @endif
     <div class="bg-background-secondary border border-neutral p-6 rounded-lg mt-2">
         <div class="flex flex-col md:flex-row justify-between">

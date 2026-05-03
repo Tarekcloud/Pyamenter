@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Paymenter\Extensions\Others\Gifts\Models\Gift;
 use Paymenter\Extensions\Others\Gifts\Models\GiftRedemption;
+use Illuminate\Support\Str;
 
 class GiftRedemptionService
 {
@@ -109,7 +110,12 @@ class GiftRedemptionService
         $creditAmount = $gift->credit_amount;
         $currencyCode = $gift->currency_code;
 
-        if ($gift->allow_credit_range) {
+        // 如果是随机生成模式
+        if ($gift->is_random_credit) {
+            $min = (float) $gift->credit_min_amount;
+            $max = (float) $gift->credit_max_amount;
+            $creditAmount = round($min + mt_rand() / mt_getrandmax() * ($max - $min), 2);
+        } elseif ($gift->allow_credit_range) {
             $selectedAmount = $selectedData['credit_amount'] ?? null;
             if (!$selectedAmount || $selectedAmount < $gift->credit_min_amount || $selectedAmount > $gift->credit_max_amount) {
                 return [
@@ -194,6 +200,10 @@ class GiftRedemptionService
 
         $currencyCode = config('settings.default_currency', 'USD');
 
+        // 获取该 Plan 的价格，用于设置服务的续费价格
+        $planPrice = $plan->price();
+        $renewalPrice = $planPrice ? $planPrice->price : 0;
+
         $order = Order::create([
             'user_id' => $user->id,
             'currency_code' => $currencyCode,
@@ -204,8 +214,31 @@ class GiftRedemptionService
             'currency_code' => $currencyCode,
             'product_id' => $product->id,
             'plan_id' => $plan->id,
-            'price' => 0,
+            'price' => $renewalPrice, // 修改为读取到的真实套餐价格，作为后续续费价格
             'quantity' => 1,
+        ]);
+
+        // 自动生成 10位字母数字混合的 hostname，并以 .tarek 结尾
+        $randomStr = strtolower(\Illuminate\Support\Str::random(10));
+        
+        // 直接向 Paymenter 的 properties 数据表中插入参数，完美契合多态模型结构
+        \Illuminate\Support\Facades\DB::table('properties')->insert([
+            [
+                'model_type' => \App\Models\Service::class,
+                'model_id' => $service->id,
+                'key' => 'hostname',
+                'value' => $randomStr . '.tarek',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'model_type' => \App\Models\Service::class,
+                'model_id' => $service->id,
+                'key' => 'os',
+                'value' => '100001',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
         ]);
 
         if ($product->server) {

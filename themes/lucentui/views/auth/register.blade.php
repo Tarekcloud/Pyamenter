@@ -88,7 +88,25 @@
                         Step <span x-text="step"></span>
                     </div>
                 </div>
-                
+ 
+ 
+ 
+ @if ($errors->any())
+    <div class="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 backdrop-blur-sm">
+        <div class="flex items-center gap-2 mb-2">
+            <x-ri-error-warning-line class="size-5 text-red-500" />
+            <h3 class="text-sm font-bold text-red-500">{{ __('Whoops! Something went wrong.') }}</h3>
+        </div>
+        <ul class="list-disc pl-5 text-sm text-red-400 space-y-1">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+
+
                 <form wire:submit="submit" id="register" class="relative">
                     
                     <div x-show="step === 1" x-ref="step1" 

@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-// 0d70be696f1d1c8830a810733401bff3
+// 4a9888356c4aff2772ee25ae76b8beb5
 
 return new class extends Migration
 {

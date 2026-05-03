@@ -149,6 +149,22 @@ class Cart
         if (Auth::check() && $coupon->hasExceededMaxUsesPerUser(Auth::id())) {
             throw new DisplayException('You have already used this coupon the maximum number of times allowed');
         }
+        
+        // --- 新增：检查当前购物车里的商品，是否有任何一个是符合该优惠码的付款周期的 ---
+        $cart = self::getOnce();
+        if ($cart->exists && $cart->items->isNotEmpty() && !empty($coupon->billing_periods)) {
+            $hasValidPeriod = false;
+            foreach ($cart->items as $item) {
+                if ($coupon->isValidForPlan($item->plan_id)) {
+                    $hasValidPeriod = true;
+                    break;
+                }
+            }
+            if (!$hasValidPeriod) {
+                throw new DisplayException('This coupon code is not applicable to the selected billing periods.');
+            }
+        }
+        // ---------------------------------------------------------------------------------
 
         return $coupon;
     }

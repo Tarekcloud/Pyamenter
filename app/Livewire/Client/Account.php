@@ -30,7 +30,6 @@ class Account extends ComponentWithProperties
         return array_merge([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
         ], $this->getRulesForProperties());
     }
 

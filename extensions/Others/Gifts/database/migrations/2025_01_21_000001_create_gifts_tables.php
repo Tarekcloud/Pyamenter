@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('credit_min_amount', 10, 2)->nullable();
             $table->decimal('credit_max_amount', 10, 2)->nullable();
             $table->boolean('allow_credit_range')->default(false);
+            $table->boolean('is_random_credit')->default(false); // 新增：随机余额模式
             $table->string('currency_code')->nullable();
             $table->json('currency_codes')->nullable();
             $table->boolean('allow_currency_selection')->default(false);

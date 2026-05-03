@@ -58,15 +58,21 @@
                             disabled 
                             class="w-full px-4 py-3 rounded-xl border border-neutral/30 bg-neutral/10 text-color-muted cursor-not-allowed" />
                     </div>
+                    
+                    
                     <div>
-                        <x-form.password-strength 
+                        <x-form.input 
                             name="password" 
+                            type="password" 
                             :label="__('general.input.password')" 
                             :placeholder="__('general.input.password_placeholder')"
                             wire:model="password" 
                             required 
                             class="w-full px-4 py-3 rounded-xl border border-neutral/30 bg-background focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
                     </div>
+                    
+                    
+                    
                     <div>
                         <x-form.input 
                             name="password_confirm" 

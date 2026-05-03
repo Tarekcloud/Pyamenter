@@ -14,7 +14,7 @@
                 <a href="{{ route('home') }}" class="flex flex-row items-center h-10 gap-2" wire:navigate>
                     <x-logo class="h-8" />
                     @if(theme('logo_display', 'logo-and-name') != 'logo-only')
-                    <span class="text-xl font-bold leading-none flex items-center">{{ config('app.name') }}</span>
+                <!--    <span class="text-xl font-bold leading-none flex items-center">{{ config('app.name') }}</span> -->
                     @endif
                 </a>
                 <div class="md:flex hidden flex-row ml-6">

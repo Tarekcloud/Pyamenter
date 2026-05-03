@@ -360,7 +360,7 @@
                                             <p class="text-2xl font-bold {{ $isAvailable ? 'text-primary' : 'text-color-muted line-through' }} mb-2">
                                                 {{ $product->price()->formatted->price }}
                                             </p>
-                                            @if($product->stock !== null)
+                                            @if($product->stock == null)
                                                 <div class="text-xs text-color-muted">
                                                     {{ $product->stock }} in stock
                                                 </div>

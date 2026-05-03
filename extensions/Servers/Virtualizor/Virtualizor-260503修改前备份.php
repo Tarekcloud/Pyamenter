@@ -20,37 +20,25 @@ class Virtualizor extends Server
             $url = 'https://' . $this->config('ip') . ':' . $this->config('port') . '/index.php?api=json&adminapikey=' . $this->config('key') . '&adminapipass=' . $this->config('password') . '&act=' . $act;
         }
 
-        // 1. 增加 120 秒超时设置，防止创建 VPS 时网络或磁盘 IO 耗时过长导致 cURL 28 错误
-        // 2. 如果你的面板没有配置有效的 SSL 证书，请保留 withoutVerifying()，否则建议移除以提高安全性
-        $httpClient = Http::timeout(120)->withoutVerifying();
-
-        try {
-            if ($method == 'get') {
-                $url .= '&' . http_build_query($data);
-                $response = $httpClient->get($url);
-            } else {
-                $response = $httpClient->asForm()->post($url, $data);
-            }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            throw new Exception('Virtualizor Connection Timeout or Network Error: ' . $e->getMessage());
+        if ($method == 'get') {
+            $url .= '&' . http_build_query($data);
+            $response = Http::withoutVerifying()->get($url)->throw();
+        } elseif ($method == 'post') {
+            $response = Http::withoutVerifying()->asForm()->$method($url, $data)->throw();
         }
 
-        // 优化错误抛出：直接将 Virtualizor 的具体报错内容返回给管理员，而不是笼统的 Failed
         if (!$response->successful()) {
-            throw new Exception('Virtualizor HTTP Error [' . $response->status() . ']: ' . $response->body());
+            throw new Exception('Failed to connect to Virtualizor API');
         }
 
-        $json = $response->json();
-        
-        // 捕获 API 内部返回的错误 (有时 HTTP 状态是 200，但 JSON 里带有 error)
-        if (isset($json['error']) && !empty($json['error'])) {
-            $errorMsg = is_array($json['error']) ? implode(', ', $json['error']) : $json['error'];
-            throw new Exception('Virtualizor API Error: ' . $errorMsg);
-        }
-
-        return $json;
+        return $response->json();
     }
 
+    /**
+     * Get all the configuration for the extension
+     *
+     * @param  array  $values
+     */
     public function getConfig($values = []): array
     {
         return [
@@ -62,14 +50,14 @@ class Virtualizor extends Server
             ],
             [
                 'name' => 'password',
-                'type' => 'password', // 建议改为 password 类型保护隐私
+                'type' => 'text',
                 'label' => 'API Password',
                 'required' => true,
             ],
             [
                 'name' => 'ip',
                 'type' => 'text',
-                'label' => 'IP Address / Domain',
+                'label' => 'IP Address',
                 'required' => true,
             ],
             [
@@ -89,6 +77,11 @@ class Virtualizor extends Server
         ];
     }
 
+    /**
+     * Get product config
+     *
+     * @param  array  $values
+     */
     public function getProductConfig($values = []): array
     {
         // 1. 获取所有计划 (Plans)
@@ -96,7 +89,9 @@ class Virtualizor extends Server
         $planOptions = [];
         if (!empty($plansResp['plans'])) {
             foreach ($plansResp['plans'] as $plan) {
+                // 修复：API 中虚拟化类型字段通常为 virt
                 $virtType = $plan['virt'] ?? 'unknown';
+                // 显示 Plan Name，值为 plid
                 $planOptions[(string)$plan['plid']] = $plan['plan_name'] . ' (' . strtoupper($virtType) . ')';
             }
         }
@@ -116,19 +111,6 @@ class Virtualizor extends Server
                 );
                 $serverOptions[(string)($s['serid'] ?? '')] = $label;
             }
-        }
-
-        // 3. 动态获取存储列表 (Storage) - 提升体验，无需再手动填 ID
-        $storageOptions = ['' => 'Auto (默认存储)'];
-        try {
-            $storageResp = $this->request('storage');
-            if (!empty($storageResp['storage'])) {
-                foreach ($storageResp['storage'] as $st) {
-                    $storageOptions[(string)$st['stid']] = sprintf('%s (%s)', $st['name'], $st['path']);
-                }
-            }
-        } catch (Exception $e) {
-            // 获取失败时不阻断，静默失败即可
         }
 
         return [
@@ -158,18 +140,17 @@ class Virtualizor extends Server
             ],
             [
                 'name' => 'stid',
-                'label' => 'Storage (存储池，可选)',
-                'type' => 'select', // 改为下拉选择
+                'label' => 'Storage ID (可选)',
+                'type' => 'text',
                 'required' => false,
-                'options' => $storageOptions,
-                'default' => '',
-                'description' => '指定要分配的存储池。留空则使用默认。'
+                'description' => '指定要分配的存储代号 (stid)'
             ],
         ];
     }
 
     public function getCheckoutConfig(Product $product)
     {
+        // 从产品设置中读取已配置的 OS 列表纯文本并解析
         $osListStr = $product->settings()->where('key', 'os_list')->first()?->value ?? '';
         $osOptions = [];
 
@@ -187,18 +168,18 @@ class Virtualizor extends Server
             $osOptions['0'] = 'Please contact admin to configure OS List';
         }
 
+        // 自动生成 10位小写字母数字 + .tarek
         $generatedHostname = strtolower(Str::random(10)) . '.tarek';
 
-        return [
+        $fields = [
             [
                 'name' => 'hostname',
                 'type' => 'text',
-                // 修复正则：允许更标准的多级域名
-                'validation' => 'regex:/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/',
+                'validation' => 'regex:/^[A-Za-z0-9-]+\.[A-Za-z0-9-]+$/',
                 'label' => 'Hostname',
                 'default' => $generatedHostname,
-                'readonly' => true,
-                'disabled' => true,
+                'readonly' => true, // 锁定不可修改
+                'disabled' => true, // 增加 disabled 以兼容不同版本的 Paymenter 前端只读效果
                 'required' => true,
             ],
             [
@@ -210,8 +191,13 @@ class Virtualizor extends Server
                 'options' => $osOptions,
             ],
         ];
+
+        return $fields;
     }
 
+    /**
+     * Check if currenct configuration is valid
+     */
     public function testConfig(): bool|string
     {
         try {
@@ -219,45 +205,46 @@ class Virtualizor extends Server
         } catch (Exception $e) {
             return $e->getMessage();
         }
+
         return true;
     }
 
     private function getUser(User $user)
     {
-        // 修正：如果用户已存在，也应该尝试捕获并验证
-        $usersResp = $this->request('users', data: ['email' => $user->email]);
-        if (!empty($usersResp['users'])) {
-            return current($usersResp['users']);
+        $users = $this->request('users', data: ['email' => $user->email]);
+        if (!empty($users['users'])) {
+            return $users['users'][key($users['users'])];
         }
-        
         $password = Str::password(16);
+        // Create user
         $data = [
             'adduser' => 1,
             'priority' => 0,
             'newpass' => $password,
             'newemail' => $user->email,
-            'fname' => $user->first_name ?: 'Client', // 容错处理：防止无名字导致建立失败
-            'lname' => $user->last_name ?: $user->id,
+            'fname' => $user->first_name,
+            'lname' => $user->last_name,
         ];
-        
         $response = $this->request('adduser', 'post', $data);
 
-        // API 返回判断更加严谨
-        if (empty($response['done']) || isset($response['error'])) {
-            throw new Exception('Failed to create Virtualizor user.');
+        if (!$response['done']) {
+            throw new Exception('Failed to create user');
         }
 
-        $usersResp = $this->request('users', data: ['email' => $user->email]);
-        if (empty($usersResp['users'])) {
-             throw new Exception('User created but cannot be fetched.');
-        }
-        
-        $vUser = current($usersResp['users']);
-        $vUser['password'] = $password;
+        $users = $this->request('users', data: ['email' => $user->email]);
+        $user = $users['users'][key($users['users'])];
+        $user['password'] = $password;
 
-        return $vUser;
+        return $user;
     }
 
+    /**
+     * Create a server
+     *
+     * @param  array  $settings  (product settings)
+     * @param  array  $properties  (checkout options)
+     * @return bool
+     */
     public function createServer(Service $service, $settings, $properties)
     {
         $settings = array_merge($settings, $properties);
@@ -268,6 +255,7 @@ class Virtualizor extends Server
 
         $plid = $settings['plid'];
 
+        // 精确获取所选 Plan 信息，用以推导 virt(ptype) 及各项默认资源
         $plansResp = $this->request('plans', 'get', ['plid' => $plid]);
         $plan = null;
         if (!empty($plansResp['plans'])) {
@@ -283,6 +271,7 @@ class Virtualizor extends Server
             throw new Exception('Failed to fetch plan details or plan no longer exists.');
         }
 
+        // 从获取到的 Plan 中提取 virt 字段
         $virt = $plan['virt'] ?? null;
         if (empty($virt)) {
             throw new Exception('Failed to determine virtualization type (virt) from the selected plan.');
@@ -291,11 +280,14 @@ class Virtualizor extends Server
         $password = Str::random(12);
         $user = $this->getUser($service->user);
 
+        // 如果未选 serverid 或者是空字符串，则代表自动分配
         $isAutoNode = (!isset($settings['serverid']) || $settings['serverid'] === '__auto__' || $settings['serverid'] === '');
+
+        // 防止前端用户恶意修改 hostname 或者未传值，做个兜底
         $hostname = $settings['hostname'] ?? (strtolower(Str::random(10)) . '.tarek');
+
         $storageId = !empty($settings['stid']) ? trim($settings['stid']) : null;
 
-        // 核心修复：全面使用 Null 合并运算符 ?? 避免 "Undefined array key" 报错
         $data = [
             'addvps' => 1,
             'node_select' => $isAutoNode ? 1 : 0, 
@@ -308,37 +300,39 @@ class Virtualizor extends Server
             'plid' => $plid,
             'stid' => $storageId,
             
-            // 使用 ?? null 确保安全兜底，如果都没有就返回 null，在下方会被自动过滤
-            'num_ips6' => $settings['ips6'] ?? $plan['ips6'] ?? null,
-            'num_ips6_subnet' => $settings['ips6_subnet'] ?? $plan['ips6_subnet'] ?? null,
-            'num_ips' => $settings['ips'] ?? $plan['ips'] ?? null,
-            'ram' => $settings['ram'] ?? $plan['ram'] ?? null,
-            'swapram' => $settings['swap'] ?? $plan['swap'] ?? null,
-            'bandwidth' => $settings['bandwidth'] ?? $plan['bandwidth'] ?? null,
-            'network_speed' => $settings['network_speed'] ?? $plan['network_speed'] ?? null,
-            'cpu' => $settings['cpu'] ?? $plan['cpu'] ?? null,
-            'cores' => $settings['cores'] ?? $plan['cores'] ?? null,
-            'cpu_percent' => $settings['cpu_percent'] ?? $plan['cpu_percent'] ?? null,
-            'vnc' => $settings['vnc'] ?? $plan['vnc'] ?? null,
+            // 完全还原您的默认继承 Plan 资源的逻辑
+            'num_ips6' => isset($settings['ips6']) ? $settings['ips6'] : $plan['ips6'],
+            'num_ips6_subnet' => isset($settings['ips6_subnet']) ? $settings['ips6_subnet'] : $plan['ips6_subnet'],
+            'num_ips' => isset($settings['ips']) ? $settings['ips'] : $plan['ips'],
+            'ram' => isset($settings['ram']) ? $settings['ram'] : $plan['ram'],
+            'swapram' => isset($settings['swap']) ? $settings['swap'] : $plan['swap'],
+            'bandwidth' => isset($settings['bandwidth']) ? $settings['bandwidth'] : $plan['bandwidth'],
+            'network_speed' => isset($settings['network_speed']) ? $settings['network_speed'] : $plan['network_speed'],
+            'cpu' => isset($settings['cpu']) ? $settings['cpu'] : $plan['cpu'],
+            'cores' => isset($settings['cores']) ? $settings['cores'] : $plan['cores'],
+            'cpu_percent' => isset($settings['cpu_percent']) ? $settings['cpu_percent'] : $plan['cpu_percent'],
+            'vnc' => isset($settings['vnc']) ? $settings['vnc'] : $plan['vnc'],
             'kvm_cache' => $plan['kvm_cache'] ?? null,
             'io_mode' => $plan['io_mode'] ?? null,
             'vnc_keymap' => $plan['vnc_keymap'] ?? null,
             'nic_type' => $plan['nic_type'] ?? null,
-            'osreinstall_limit' => $settings['osreinstall_limit'] ?? $plan['osreinstall_limit'] ?? null,
-            'space' => $settings['space'] ?? $plan['space'] ?? null,
+            'osreinstall_limit' => isset($settings['osreinstall_limit']) ? $settings['osreinstall_limit'] : $plan['osreinstall_limit'],
+            'space' => isset($settings['space']) ? $settings['space'] : $plan['space'],
         ];
 
-        // 移除所有 null 值，保留 0 或 false
+        // 核心：移除所有 null 值的键。如果 ippid 是 null，它将不会被发送。
         $data = array_filter($data, function ($v) { return !is_null($v); });
 
         $response = $this->request('addvs', 'post', $data);
 
-        // error 已经被 request 里的统一拦截处理了，这里只需确保创建成功
-        if (empty($response['newvs']['vpsid'])) {
-            throw new Exception('VPS creation initialized but no VPS ID returned.');
+        if (isset($response['error']) && !empty($response['error'])) {
+            $errorMsg = is_array($response['error']) ? implode(', ', $response['error']) : $response['error'];
+            throw new Exception('Failed to create server with error: ' . $errorMsg);
         }
 
-        $service->properties()->updateOrCreate(['key' => 'server_id'], [
+        $service->properties()->updateOrCreate([
+            'key' => 'server_id',
+        ], [
             'name' => 'Virtualizor Server ID',
             'value' => $response['newvs']['vpsid'],
         ]);
@@ -350,11 +344,14 @@ class Virtualizor extends Server
             ]);
         }
 
-        $service->properties()->updateOrCreate(['key' => 'hostname'], [
+        $service->properties()->updateOrCreate([
+            'key' => 'hostname',
+        ], [
             'name' => 'Hostname',
             'value' => $hostname,
         ]);
 
+        ## 强制返回原始设置的VPS密码，用于邮件显示的密码
         $response['newvs']['pass'] = $password;
 
         return [
@@ -363,36 +360,65 @@ class Virtualizor extends Server
         ];
     }
 
+    /**
+     * Suspend a server
+     *
+     * @param  array  $settings  (product settings)
+     * @param  array  $properties  (checkout options)
+     * @return bool
+     */
     public function suspendServer(Service $service, $settings, $properties)
     {
         if (!isset($properties['server_id'])) {
             throw new Exception('Server does not exist');
         }
-        $this->request('vs', 'post', ['suspend' => $properties['server_id']]); // 部分 API 使用 post 更安全
+
+        // Suspend server
+        $this->request('vs', 'get', ['suspend' => $properties['server_id']]);
+
         return true;
     }
 
+    /**
+     * Unsuspend a server
+     *
+     * @param  array  $settings  (product settings)
+     * @param  array  $properties  (checkout options)
+     * @return bool
+     */
     public function unsuspendServer(Service $service, $settings, $properties)
     {
         if (!isset($properties['server_id'])) {
             throw new Exception('Server does not exist');
         }
-        $this->request('vs', 'post', ['unsuspend' => $properties['server_id']]);
+
+        // Unsuspend server
+        $this->request('vs', 'get', ['unsuspend' => $properties['server_id']]);
+
         return true;
     }
 
+    /**
+     * Terminate a server
+     *
+     * @param  array  $settings  (product settings)
+     * @param  array  $properties  (checkout options)
+     * @return bool
+     */
     public function terminateServer(Service $service, $settings, $properties)
     {
         if (!isset($properties['server_id'])) {
             throw new Exception('Server does not exist');
         }
 
+        // Terminate server
         $request = $this->request('vs', 'post', ['delete' => $properties['server_id']]);
 
         if (empty($request['done']) || !$request['done']) {
             throw new Exception('Failed to terminate server');
         }
 
+        // Remove server id
         $service->properties()->where('key', 'server_id')->delete();
 
         return true;
@@ -439,7 +465,7 @@ class Virtualizor extends Server
         $response = $this->request('sso', data: ['svs' => $properties['server_id']], clientApi: true);
 
         if (!isset($response['sid'])) {
-            throw new Exception('Failed to get Control Panel SSO link');
+            throw new Exception('Failed to get VNC link');
         }
 
         return 'https://' . $this->config('ip') . ':' . $this->config('client_port') . '/' . $response['token_key'] . '/?as=' . $response['sid'] . '&svs=' . $properties['server_id'];
@@ -453,6 +479,7 @@ class Virtualizor extends Server
 
         $settings = array_merge($settings, $properties);
 
+        // 由于已经直接配置了 plid，直接读取即可，不再需要进行额外查找匹配 plan_name
         if (empty($settings['plid'])) {
             throw new Exception('Target Plan ID (plid) is missing.');
         }
@@ -460,8 +487,8 @@ class Virtualizor extends Server
         $editData = [
             'vpsid' => $properties['server_id'],
             'plid' => $settings['plid'],
-            'theme_edit' => 1,
-            'editvps' => 1,
+            'theme_edit' => 1, // Boolean
+            'editvps' => 1, // Boolean
         ];
 
         $response = $this->request('managevps', 'post', $editData);

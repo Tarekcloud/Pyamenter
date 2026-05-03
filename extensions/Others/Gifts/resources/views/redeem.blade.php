@@ -62,49 +62,51 @@
                     </div>
 
                     @if($gift->type === 'service')
-                        <div class="mb-4">
-                            <label for="selected_product_id" class="block text-sm font-medium text-primary-100 mb-2">
-                                Select Product
-                            </label>
-                            <select
-                                id="selected_product_id"
-                                wire:model.live="selectedProductId"
-                                class="w-full px-4 py-2 bg-background-primary border border-neutral rounded-lg text-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            >
-                                <option value="">Choose a product...</option>
-                                @foreach($this->products as $product)
-                                    <option value="{{ $product->id }}">{{ $product->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('selectedProductId')
-                                <p class="mt-1 text-sm text-danger">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        @if($selectedProductId)
+                        @if($gift->allow_user_selection)
                             <div class="mb-4">
-                                <label for="selected_plan_id" class="block text-sm font-medium text-primary-100 mb-2">
-                                    Select Plan
+                                <label for="selected_product_id" class="block text-sm font-medium text-primary-100 mb-2">
+                                    Select Product
                                 </label>
                                 <select
-                                    id="selected_plan_id"
-                                    wire:model="selectedPlanId"
+                                    id="selected_product_id"
+                                    wire:model.live="selectedProductId"
                                     class="w-full px-4 py-2 bg-background-primary border border-neutral rounded-lg text-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 >
-                                    <option value="">Choose a plan...</option>
-                                    @php
-                                        $plans = \App\Models\Plan::where('priceable_type', \App\Models\Product::class)
-                                            ->where('priceable_id', $selectedProductId)
-                                            ->get();
-                                    @endphp
-                                    @foreach($plans as $plan)
-                                        <option value="{{ $plan->id }}">{{ $plan->name }}</option>
+                                    <option value="">Choose a product...</option>
+                                    @foreach($this->products as $product)
+                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
                                     @endforeach
                                 </select>
-                                @error('selectedPlanId')
+                                @error('selectedProductId')
                                     <p class="mt-1 text-sm text-danger">{{ $message }}</p>
                                 @enderror
                             </div>
+
+                            @if($selectedProductId)
+                                <div class="mb-4">
+                                    <label for="selected_plan_id" class="block text-sm font-medium text-primary-100 mb-2">
+                                        Select Plan
+                                    </label>
+                                    <select
+                                        id="selected_plan_id"
+                                        wire:model="selectedPlanId"
+                                        class="w-full px-4 py-2 bg-background-primary border border-neutral rounded-lg text-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    >
+                                        <option value="">Choose a plan...</option>
+                                        @php
+                                            $plans = \App\Models\Plan::where('priceable_type', \App\Models\Product::class)
+                                                ->where('priceable_id', $selectedProductId)
+                                                ->get();
+                                        @endphp
+                                        @foreach($plans as $plan)
+                                            <option value="{{ $plan->id }}">{{ $plan->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('selectedPlanId')
+                                        <p class="mt-1 text-sm text-danger">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @endif
                         @endif
                     @endif
 

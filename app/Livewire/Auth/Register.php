@@ -36,7 +36,35 @@ class Register extends ComponentWithProperties
         $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                'unique:users',
+                function ($attribute, $value, $fail) {
+                    $blockedKeywords = [
+                        'outlook',
+                        'foxmail',
+                        '10minutemail',
+                        'live.com',
+                        'tempmail',
+                        'disposablemail',
+                        'proton.me',
+                        'seek.li',
+                        'nodeseek.org',
+                        'mail.ru'
+                    ];
+            
+                    $domain = strtolower(substr(strrchr($value, "@"), 1));
+            
+                    foreach ($blockedKeywords as $keyword) {
+                        if (str_contains($domain, strtolower($keyword))) {
+                            $fail(__('This email domain is not allowed for registration. Please use a common personal email service such as Gmail, or a business email address.'));
+                            return;
+                        }
+                    }
+                },
+            ],
             'password' => 'required|string|min:8|confirmed',
         ];
 

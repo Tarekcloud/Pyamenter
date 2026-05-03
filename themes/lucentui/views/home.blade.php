@@ -706,13 +706,13 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mb-16">
-                    <a href="#pricing" class="group relative w-full sm:w-auto px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-300">
+                    <a href="https://www.tarekcloud.com/products/hk-standard-servers" class="group relative w-full sm:w-auto px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all duration-300">
                         <span class="flex items-center justify-center gap-2">
                             {{ theme('hero_cta_primary_text', 'Deploy Now') }}
                             <x-ri-rocket-2-fill class="size-5 group-hover:translate-x-1 transition-transform duration-300" />
                         </span>
                     </a>
-                    <a href="#contact" class="group w-full sm:w-auto px-8 py-4 bg-background-secondary border border-neutral/50 text-color-base font-semibold rounded-xl hover:border-neutral hover:bg-background-secondary/20 backdrop-blur-md transition-all duration-300">
+                    <a href="https://www.tarekcloud.com/tickets" class="group w-full sm:w-auto px-8 py-4 bg-background-secondary border border-neutral/50 text-color-base font-semibold rounded-xl hover:border-neutral hover:bg-background-secondary/20 backdrop-blur-md transition-all duration-300">
                         <span>{{ theme('hero_cta_secondary_text', 'Need help?') }}</span>
                     </a>
                 </div>
@@ -892,23 +892,6 @@
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 @foreach ($categories as $category)
                 <a href="{{ route('category.show', ['category' => $category->slug]) }}" wire:navigate class="group relative bg-background border border-neutral/50 rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col h-full">
-                    @if ($category->image)
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="{{ Storage::url($category->image) }}" alt="{{ $category->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-90"></div>
-                        <div class="absolute bottom-4 left-6">
-                            <div class="bg-primary/10 text-primary p-2 rounded-lg w-fit mb-2 backdrop-blur-md border border-primary/20">
-                                <x-ri-server-line class="h-6 w-6" />
-                            </div>
-                        </div>
-                    </div>
-                    @else
-                    <div class="h-56 bg-background-secondary flex items-end p-6 border-b border-neutral/30">
-                        <div class="bg-primary/10 text-primary p-3 rounded-xl border border-primary/20">
-                            <x-ri-server-line class="h-8 w-8" />
-                        </div>
-                    </div>
-                    @endif
                     
                     <div class="p-8 pt-6 flex-grow flex flex-col">
                         <h3 class="text-2xl font-bold text-color-base mb-3 group-hover:text-primary transition-colors">
@@ -916,7 +899,7 @@
                         </h3>
                         
                         @if(theme('show_category_description', true))
-                        <div class="prose dark:prose-invert prose-sm text-color-muted mb-6 line-clamp-3 flex-grow">
+                        <div class="prose dark:prose-invert prose-sm text-color-muted mb-6 line-clamp-4 flex-grow">
                             {!! $category->description !!}
                         </div>
                         @endif
