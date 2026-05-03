@@ -1,0 +1,12 @@
+{
+    "ids": {
+        "3": "ubuntu.png", 
+        "4": "windows.png"
+    },
+    "keywords": {
+        "ubuntu": "ubuntu.svg",
+        "centos": "centos.png",
+        "minecraft": "minecraft-icon.png",
+        "game": "https://cdn-icons-png.flaticon.com/512/808/808439.png"
+    }
+}

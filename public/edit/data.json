@@ -1,0 +1,137 @@
+[
+    {
+        "id": "69e88b6a46793",
+        "datetime": "2026-04-22 16:46:50",
+        "type": "recovery",
+        "title_en": "Notice on the Completion of Hong Kong Node Migration, Network Upgrades, and Compensation Issuance",
+        "title_cn": "",
+        "content_en": "<p data-path-to-node=\"3\">We are writing to update you on the final progress of the physical migration of our Hong Kong node. The physical relocation of equipment from the IT2 data center to Equinix HK2 was successfully completed on April 2, 2026. Due to delivery delays from our upstream network providers and the need for rigorous testing of the new network architecture, network connectivity for this node was officially and fully restored on April 12. We sincerely apologize for any inconvenience caused to your business operations during the network outage.<\/p><p data-path-to-node=\"4\">Since the network came back online, we have continuously fine-tuned our underlying infrastructure and have now completed the following core configuration upgrades:<\/p><ul data-path-to-node=\"5\"><li><p data-path-to-node=\"5,0,0\"><b data-path-to-node=\"5,0,0\" data-index-in-node=\"0\">Core Routing and Switching Architecture Upgrade:<\/b> The routing engine has been completely transitioned to the VyOS system, achieving an order-of-magnitude increase in packet forwarding performance. Furthermore, our physical network has been fully upgraded with Cisco enterprise-grade switches, providing stability assurance for high-throughput workloads.<\/p><\/li><li><p data-path-to-node=\"5,1,0\"><b data-path-to-node=\"5,1,0\" data-index-in-node=\"0\">Anti-DDoS Security Defense:<\/b> Deployed for IPv4 traffic. In the event of large-scale DDoS attacks, traffic will be diverted to scrubbing paths to ensure business continuity. Furthermore, thanks to our direct network contracts, prolonged upstream null-routing (blackholing) will no longer occur.<\/p><\/li><li><p data-path-to-node=\"5,2,0\"><b data-path-to-node=\"5,2,0\" data-index-in-node=\"0\">Streaming Media DNS Unlocking:<\/b> Fully supports IPv4\/IPv6 dual-stack. We now offer DNS unlocking services for 6 countries\/regions (for specific configuration guides, please log in to the Client Center and check the Notice page).<\/p><\/li><\/ul><p data-path-to-node=\"6\">Currently, the Hong Kong node has achieved direct contracted deployment at the Equinix HK2 data center and established direct connections with Tier 1 international upstreams (EIE + Cogent). Both overall hardware performance and network stability have seen a massive leap, and <b data-path-to-node=\"6\" data-index-in-node=\"276\">as our business scale continues to expand, we will gradually integrate more upstream providers<\/b>. To ensure service transparency, we would like to make the following special clarifications regarding the current service status and future product positioning:<\/p><p data-path-to-node=\"7\"><b data-path-to-node=\"7\" data-index-in-node=\"0\">1. Current Network Status and Subsequent Optimizations<\/b>\r\n<\/p><p data-path-to-node=\"7\">We have not yet established a Peer connection with Google; therefore, latency may temporarily be higher when accessing Google-related services. We will continue to push forward with routing optimizations and upstream connection adjustments. Please refer to your real-time test results for actual network performance.<\/p><p data-path-to-node=\"8\"><b data-path-to-node=\"8\" data-index-in-node=\"0\">2. Service Compensation Issuance<\/b>\r\n<\/p><p data-path-to-node=\"8\">As a token of our appreciation for your patience and understanding during the multi-day migration period, we have uniformly added <b data-path-to-node=\"8\" data-index-in-node=\"163\">1 month of free compensation time<\/b> to all affected active instances. This compensation has now been fully and automatically credited to your account. You can log in to the management panel to verify the updated expiration date.<\/p><p data-path-to-node=\"9\"><b data-path-to-node=\"9\" data-index-in-node=\"0\">3. Core Product Positioning Notice<\/b>\r\n<\/p><p data-path-to-node=\"9\">Please note that the current Hong Kong International Network products <b data-path-to-node=\"9\" data-index-in-node=\"105\">do not guarantee network connectivity to mainland China<\/b>. With the infrastructure upgrades, the future strategic positioning of this product line will strictly focus on providing <b data-path-to-node=\"9\" data-index-in-node=\"283\">high-configuration storage and computing services<\/b>. In the future, we do not rule out the possibility of launching 3C-optimized (China-direct) instances. However, given the extremely high cost of premium optimized bandwidth from Hong Kong to mainland China, if launched, these instances will operate as a completely separate and independent product line.<\/p><p data-path-to-node=\"10\">If you encounter any technical issues or configuration questions after the network restoration, please feel free to submit a ticket through the Client Center. Our customer service team will assist you with troubleshooting and resolution as soon as possible.<\/p>",
+        "content_cn": ""
+    },
+    {
+        "id": "69c8b7e61ae08",
+        "datetime": "2026-03-28 13:14:08",
+        "type": "maintenance",
+        "title_en": "Hong Kong Network Upgrade: Migration to Equinix HK2 with Direct Tier 1 Connectivity",
+        "title_cn": "",
+        "content_en": "<p data-start=\"550\" data-end=\"985\">We were previously operating in the iTech Tower 2 data center. Due to frequent large-scale DDoS attacks, upstream mitigation policies may, under extreme conditions, result in prolonged route withdrawals. To enhance network controllability and overall stability, and to fundamentally improve mitigation strategies and upstream routing flexibility, we have initiated a comprehensive upgrade and migration of our Hong Kong infrastructure.<\/p>\r\n<p data-start=\"987\" data-end=\"1501\">This upgrade includes migration to the <b>Equinix HK2<\/b> data center, deployment of dedicated racks directly contracted with Equinix, and direct connectivity to Tier 1 carriers such as EIE and Cogent, with the capability to further expand connectivity to additional premium carriers including PCCW and GSL. By establishing direct relationships with Tier 1 upstream providers, we gain greater control over routing and network operations, effectively eliminating prolonged route withdrawals caused by upstream constraints.<\/p>\r\n<p data-start=\"1757\" data-end=\"1832\">The scheduled migration window is:<br><b>\r\nMarch 29, 2026 to April 4, 2026 (UTC+8).<\/b><\/p>\r\n<p data-start=\"1834\" data-end=\"2052\">For affected Hong Kong region users, we <b>have already provided 15 days of service credit<\/b>. Additional compensation will be dynamically adjusted based on the actual impact duration to ensure fair and transparent handling.<\/p>\r\n<p data-start=\"2054\" data-end=\"2198\" data-is-last-node=\"\" data-is-only-node=\"\">Thank you for your understanding and continued support. The latest updates will be shared with you via email at the earliest opportunity. Please stay tuned.<\/p>",
+        "content_cn": ""
+    },
+    {
+        "id": "69b649bf14321",
+        "datetime": "2026-03-15 13:51:36",
+        "type": "feature",
+        "title_en": "DNS Setup Guide for Unblocking Content",
+        "title_cn": "",
+        "content_en": "<p>The previous DNS unlocking guide has been retired.TarekCloud now provides a new DNS unlocking solution available across all TarekCloud servers.Supports various AI applications, TikTok, and other services.You may use the following DNS servers to enable content unlocking services:<\/p><h4>Available DNS Servers by Region：<\/h4><pre><b>Singapore：<br><\/b>IPv4: 213.35.105.117<br>IPv6: 2603:c024:4508:5a88:d3de:a92b:b5da:cb92<br><b>Germany：<br><\/b>IPv4: 138.2.166.118<br>IPv6: 2603:c020:8007:99::7777<br><b>Dubai, UAE：<br><\/b>IPv4: 193.123.93.210<br>IPv6: 2603:c026:8000:4f66::7777<br><b>Phoenix, USA：<br><\/b>IPv4: 155.248.201.229<br>IPv6: 2603:c024:c001:1eee:132c:d967:7b4a:b132<br><b>Osaka, Japan：<br><\/b>IPv4: 161.33.21.108<br>IPv6: 2603:c023:1:3066:0:e2ee:c42e:c486<br><b>Seoul, South Korea：<br><\/b>IPv4: 217.142.141.75<br>IPv6: 2603:c022:8000:1566:ae6:b298:d7ac:912e<\/pre><h4>Notes and Instructions：<\/h4><ol><li>For Linux systems, you can configure the DNS server by editing the \/etc\/resolv.conf file directly.<\/li><li>For Windows systems, simply update the DNS settings in the system network configuration.<\/li><li>Both IPv4 and IPv6 addresses listed above can be used directly as DNS servers.<\/li><li>This service is available only for TarekCloud servers. Access is protected by a whitelist restriction.No availability guarantee is provided for this service.<\/li><\/ol>",
+        "content_cn": ""
+    },
+    {
+        "id": "69b1ffd57c730",
+        "datetime": "2026-03-12 07:47:59",
+        "type": "notice",
+        "title_en": "Manual Troubleshooting Method for Network Issues Under DDoS Protection",
+        "title_cn": "",
+        "content_en": "<p>If you experience abnormal download speeds or other related network issues while under DDoS protection, we recommend adjusting your system network <strong data-start=\"414\" data-end=\"421\">MTU<\/strong> value to <strong data-start=\"431\" data-end=\"439\">1420<\/strong> or lower for testing, to check whether the issue can be alleviated or resolved.<\/p>",
+        "content_cn": ""
+    },
+    {
+        "id": "69a8e58e27f4c",
+        "datetime": "2026-03-05 10:07:59",
+        "type": "change",
+        "title_en": "Company Services Now Available",
+        "title_cn": "",
+        "content_en": "<p>We are pleased to announce the launch of our <strong>company-related services<\/strong>, which are now independently operated by our team. Currently, we support services across <strong>most U.S. states<\/strong>.<\/p><p>Our services include:<\/p><ul><li><p><strong>Company Registration<\/strong> (2–5 business days)<\/p><\/li><li><p><strong>EIN Application with the IRS<\/strong> (within 2 hours on business days)<\/p><\/li><li><p><strong>Annual Compliance \/ Company Renewal<\/strong> (time varies by state)<\/p><\/li><li><p><strong>Company Tax Filing<\/strong> (currently supports zero filing only)<\/p><\/li><li><p><strong>Payment Gateway &amp; Bank Account Opening Assistance<\/strong><\/p><\/li><\/ul><p>We are committed to providing efficient and reliable services for businesses expanding into the United States.<\/p>",
+        "content_cn": ""
+    },
+    {
+        "id": "69a8d189c15b4",
+        "datetime": "2026-03-05 08:40:33",
+        "type": "feature",
+        "title_en": "Homepage Order Process Optimization",
+        "title_cn": "",
+        "content_en": "<p>We have fully optimized the homepage ordering process. The system no longer queries server status during checkout and now uses static data loading instead, significantly improving page responsiveness. Users can now enjoy <strong data-start=\"452\" data-end=\"511\">ultra-fast ordering and second-level service activation<\/strong>.<\/p>",
+        "content_cn": ""
+    },
+    {
+        "id": "69a87298a9b6c",
+        "datetime": "2026-03-04 19:40:08",
+        "type": "recovery",
+        "title_en": "LAX Network Services Restored",
+        "title_cn": "",
+        "content_en": "<p>Network issues in LAX have been resolved. Services are back online following upstream intervention. We are improving our internal processes to ensure even faster resolution moving forward. Please note that LAX is now backed by 100G+ DDoS protection. Thank you for your patience!<\/p>",
+        "content_cn": "<p><br><\/p>"
+    },
+    {
+        "id": "69a8150b8d7de",
+        "datetime": "2026-03-04 19:13:38",
+        "type": "outage",
+        "title_en": "LAX Large-Scale DDoS Attack Notice",
+        "title_cn": "",
+        "content_en": "<p data-start=\"470\" data-end=\"485\">The <span data-start=\"491\" data-end=\"557\">LAX region is currently experiencing a large-scale DDoS attack<\/span>. Our team has already contacted the upstream network provider and is actively working with them to mitigate the issue. According to the upstream provider, their network is equipped with a comprehensive <span data-start=\"760\" data-end=\"786\" style=\"\">DDoS protection system<\/span>, and mitigation measures are currently being implemented.<\/p><p data-start=\"1157\" data-end=\"1335\">Any updates will be announced as soon as they become available.<\/p><p>\r\n\r\n\r\n\r\n<\/p><p data-start=\"1337\" data-end=\"1382\">Thank you for your understanding and support.<\/p>",
+        "content_cn": "<p data-start=\"127\" data-end=\"133\"><br><\/p>"
+    },
+    {
+        "id": "69a2c94a31d6c",
+        "datetime": "2026-02-28 12:00:00",
+        "type": "maintenance",
+        "title_en": "Scheduled Website Maintenance Notice",
+        "title_cn": "",
+        "content_en": "<p>Our official website is undergoing scheduled maintenance from <b data-path-to-node=\"5,1,1,1,0\" data-index-in-node=\"66\">19:00 to 21:00 (UTC+8) on February 28, 2026<\/b>. An update will be posted once the maintenance is complete. Thank you for your patience and support.<\/p>",
+        "content_cn": "<p><br><\/p>"
+    },
+    {
+        "id": "69a07c789b644",
+        "datetime": "2026-02-17 00:56:32",
+        "type": "recovery",
+        "title_en": "HK Service Restored ",
+        "title_cn": "",
+        "content_en": "<p>Services in the Hong Kong region have been fully restored. <\/p><p>We have now integrated a <b data-path-to-node=\"5,0,0\" data-index-in-node=\"94\">German-based DDoS scrubbing system<\/b>. Going forward, in the event of an attack on our Hong Kong infrastructure, we will preserve <b data-path-to-node=\"5,0,0\" data-index-in-node=\"221\">IPv6 and local HK IX (Internet Exchange) routes<\/b>, while rerouting all other traffic to the German scrubbing center. <\/p><p>This strategy ensures robust protection while maximizing low-latency performance for local connections.<\/p>",
+        "content_cn": "<p><br><\/p>"
+    },
+    {
+        "id": "699293cfbb48a",
+        "datetime": "2026-02-16 11:44:31",
+        "type": "compensation",
+        "title_en": "HK Region Incident Report & Compensation Notice",
+        "title_cn": "",
+        "content_en": "<p data-path-to-node=\"10\">In response to the DDoS attacks targeting our Hong Kong zone on February 16, we have issued a&nbsp;<span data-path-to-node=\"10\" data-index-in-node=\"94\" style=\"font-weight: bolder;\">1-day service extension<\/span>&nbsp;to all affected users. We sincerely apologize for any inconvenience caused by this disruption.<\/p><p data-path-to-node=\"11\"><span data-path-to-node=\"11\" data-index-in-node=\"0\" style=\"font-weight: bolder;\">【Next Steps &amp; Roadmap】<\/span><\/p><ol start=\"1\" data-path-to-node=\"12\"><li><p data-path-to-node=\"12,0,0\"><span data-path-to-node=\"12,0,0\" data-index-in-node=\"0\" style=\"font-weight: bolder;\">Emergency Mitigation:<\/span>&nbsp;Affected by the Spring Festival holiday, the NOC team will complete the redundant line switch immediately after being fully online.<\/p><\/li><li><p data-path-to-node=\"12,1,0\"><span data-path-to-node=\"12,1,0\" data-index-in-node=\"0\" style=\"font-weight: bolder;\">Hardware Upgrade:<\/span>&nbsp;Following the holiday, we will replace all core networking equipment in the HK region and deploy&nbsp;<span data-path-to-node=\"12,1,0\" data-index-in-node=\"115\" style=\"font-weight: bolder;\">full auto-failover strategies<\/span>&nbsp;to ensure fast response to future incidents.<\/p><\/li><li><p data-path-to-node=\"12,2,0\"><span data-path-to-node=\"12,2,0\" data-index-in-node=\"0\" style=\"font-weight: bolder;\">Our Commitment:<\/span>&nbsp;TarekCloud remains committed to combating malicious DDoS activities. We will continue to invest in high-tier defense resources regardless of cost to ensure the absolute security and stability of your services.<\/p><\/li><\/ol>",
+        "content_cn": "<p data-path-to-node=\"10\"><br><\/p>"
+    },
+    {
+        "id": "69915fb12dd29",
+        "datetime": "2026-02-15 13:50:33",
+        "type": "feature",
+        "title_en": "Streaming Media DNS Unlock Configuration",
+        "title_cn": "",
+        "content_en": "<h4><span style=\"font-size: 1.75rem;\">1. Hong Kong (HK) Region: Full Access<\/span><\/h4><ul data-path-to-node=\"12\"><li><p data-path-to-node=\"12,0,0\"><b data-path-to-node=\"12,0,0\" data-index-in-node=\"0\">Status<\/b>: Fully supports AI platforms (ChatGPT, Claude, Gemini, etc.), TikTok, and most major streaming services.<\/p><\/li><li><p data-path-to-node=\"12,1,0\"><b data-path-to-node=\"12,1,0\" data-index-in-node=\"0\">Configuration<\/b>: You can use any valid IPv4 DNS (such as 8.8.8.8 or your local default DNS). No special configuration is required for full unlocking.<\/p><\/li><\/ul><h4>2. US Los Angeles (US-LAX) Region: Targeted Access<\/h4><ul data-path-to-node=\"14\"><li><p data-path-to-node=\"14,0,0\"><b data-path-to-node=\"14,0,0\" data-index-in-node=\"0\">Status<\/b>: Currently, this region provides specialized unlocking specifically for <b data-path-to-node=\"14,0,0\" data-index-in-node=\"79\">TikTok<\/b>.<\/p><\/li><li><p data-path-to-node=\"14,1,0\"><b data-path-to-node=\"14,1,0\" data-index-in-node=\"0\">Configuration<\/b>: Please set your DNS to the following addresses to enable TikTok access:<\/p><ul data-path-to-node=\"14,1,1\"><li><p data-path-to-node=\"14,1,1,0,0\"><b data-path-to-node=\"14,1,1,0,0\" data-index-in-node=\"0\">IPv4 Address<\/b>: <code data-path-to-node=\"14,1,1,0,0\" data-index-in-node=\"14\">138.2.166.118<\/code><\/p><\/li><li><p data-path-to-node=\"14,1,1,1,0\"><b data-path-to-node=\"14,1,1,1,0\" data-index-in-node=\"0\">IPv6 Address<\/b>: <code data-path-to-node=\"14,1,1,1,0\" data-index-in-node=\"14\">2603:c020:8007:99::7777<\/code><\/p><\/li><\/ul><\/li><li><p data-path-to-node=\"14,2,0\"><b data-path-to-node=\"14,2,0\" data-index-in-node=\"0\">Expert Tip<\/b>: To maintain optimal speeds for other services, we recommend configuring <b data-path-to-node=\"14,2,0\" data-index-in-node=\"84\">DNS Split-Tunneling<\/b> exclusively for TikTok-related domains.<\/p><\/li><\/ul><h4>3. US Phoenix (US-PHX) Region: Native Access<\/h4><ul data-path-to-node=\"16\"><li><p data-path-to-node=\"16,0,0\"><b data-path-to-node=\"16,0,0\" data-index-in-node=\"0\">Status<\/b>: This region features high-quality native IP ranges, supporting almost all mainstream streaming platforms.<\/p><\/li><li><p data-path-to-node=\"16,1,0\"><b data-path-to-node=\"16,1,0\" data-index-in-node=\"0\">Configuration<\/b>: Standard settings apply; no additional DNS modifications are needed.<\/p><\/li><\/ul>",
+        "content_cn": "<div _ngcontent-ng-c4066672838=\"\" inline-copy-host=\"\" class=\"markdown markdown-main-panel stronger enable-updated-hr-color preserve-whitespaces-in-response\" id=\"model-response-message-contentr_92df9458b44eb9ab\" aria-live=\"polite\" aria-busy=\"false\" dir=\"ltr\" style=\"--animation-duration: 400ms; --fade-animation-function: linear; animation: auto ease 0s 1 normal none running none; appearance: none; background: none 0% 0% \/ auto repeat scroll padding-box border-box rgba(0, 0, 0, 0); border: 0px none rgb(31, 31, 31); inset: auto; clear: none; clip: auto; color: rgb(31, 31, 31); columns: auto; contain: none; container: none; content: normal; cursor: auto; cx: 0px; cy: 0px; d: none; direction: ltr; fill: rgb(0, 0, 0); filter: none; flex: 0 1 auto; float: none; gap: normal; hyphens: manual; interactivity: auto; isolation: auto; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; marker: none; mask: none; offset: normal; opacity: 1; order: 0; outline: rgb(31, 31, 31) none 0px; overlay: none; padding: 0px; page: auto; perspective: none; position: static; quotes: auto; r: 0px; resize: none; rotate: none; rx: auto; ry: auto; scale: none; speak: normal; stroke: none; transform: none; transition: all; translate: none; visibility: visible; x: 0px; y: 0px; zoom: 1; margin-top: 0px !important; font-family: \" google=\"\" sans=\"\" text\",=\"\" sans-serif=\"\" !important;=\"\" line-height:=\"\" 1.15=\"\" !important;\"=\"\"><h4 style=\"animation: auto ease 0s 1 normal none running none; appearance: none; background: none 0% 0% \/ auto repeat scroll padding-box border-box rgba(0, 0, 0, 0); border: 0px none rgb(31, 31, 31); inset: auto; clear: none; clip: auto; columns: auto; contain: none; container: none; content: normal; cursor: auto; cx: 0px; cy: 0px; d: none; direction: ltr; fill: rgb(0, 0, 0); filter: none; flex: 0 1 auto; float: none; gap: normal; hyphens: manual; interactivity: auto; isolation: auto; margin-right: 0px; margin-bottom: 16px; margin-left: 0px; marker: none; mask: none; offset: normal; opacity: 1; order: 0; outline: rgb(31, 31, 31) none 0px; overlay: none; padding: 0px; page: auto; perspective: none; position: static; quotes: auto; r: 0px; resize: none; rotate: none; rx: auto; ry: auto; scale: none; speak: normal; stroke: none; transform: none; transition: all; translate: none; visibility: visible; x: 0px; y: 0px; zoom: 1; line-height: 1.15 !important;\"><br><\/h4><\/div>"
+    },
+    {
+        "id": "69909f762c325",
+        "datetime": "2026-02-14 08:30:00",
+        "type": "feature",
+        "title_en": "APAC Future Mitigation Roadmap: Integrated AMS Auto-Scrubbing & Failover Mechanism",
+        "title_cn": "",
+        "content_en": "<p data-path-to-node=\"6\">After evaluating several third-party Anti-DDoS providers, we found their solutions fell short of our requirements due to slow response times or the lack of self-managed BGP control panels.<\/p><p data-path-to-node=\"7\">To address this, we are leveraging our existing routers deployed in Amsterdam (AMS) to establish a 100G capacity scrubbing center. The system is currently in testing: in the event of future massive attacks on our APAC network, traffic will automatically reroute to AMS for mitigation. While this will temporarily increase latency, it effectively prevents IPv4 services from being blackholed or disconnected.<\/p><p data-path-to-node=\"8\">Currently, we have implemented a temporary high-protection solution as a transition while routing optimization continues. In future we will deploy a fully autonomous, self-managed mitigation routing system to provide even greater stability.<\/p>",
+        "content_cn": "<p data-path-to-node=\"2\"><br><\/p>"
+    },
+    {
+        "id": "69909ecf30b21",
+        "datetime": "2026-02-11 12:30:00",
+        "type": "compensation",
+        "title_en": "Service Restored: HK Compensation Issued",
+        "title_cn": "",
+        "content_en": "<p>In response to the recent large-scale DDoS attacks on our Hong Kong infrastructure, we have issued a 10-day service extension to all HK zone users as compensation. We sincerely apologize for any inconvenience caused.<\/p>",
+        "content_cn": "<p><br><\/p>"
+    },
+    {
+        "id": "69909a7eb187e",
+        "datetime": "2026-01-28 10:30:00",
+        "type": "outage",
+        "title_en": "Continuous TCP SYN Flood Attack",
+        "title_cn": "",
+        "content_en": "<p>After filtering UDP reflection attacks, the pattern shifted to TCP SYN Flood, causing core router CPU saturation.<\/p>",
+        "content_cn": "<p><br><\/p>"
+    }
+]
