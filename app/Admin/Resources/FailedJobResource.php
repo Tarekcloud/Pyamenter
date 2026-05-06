@@ -39,6 +39,52 @@ class FailedJobResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('uuid')->toggleable(isToggledHiddenByDefault: true),
+                
+                // 1. 显示 Service ID 并附带跳转链接
+                TextColumn::make('service_id')
+                    ->label('Service ID')
+                    ->getStateUsing(function ($record) {
+                        $payload = json_decode($record->payload, true);
+                        if (isset($payload['data']['command'])) {
+                            $command = $payload['data']['command'];
+                            if (preg_match('/"App\\\\Models\\\\Service";s:2:"id";i:(\d+);/', $command, $matches)) {
+                                return $matches[1];
+                            }
+                        }
+                        return '-';
+                    })
+                    ->url(fn ($state) => $state !== '-' ? url("/admin/services/services/{$state}/edit") : null)
+                    ->color('primary')
+                    ->icon(fn ($state) => $state !== '-' ? 'heroicon-o-link' : null)
+                    ->searchable(false)
+                    ->sortable(false),
+                    
+                // 2. 显示关联的 Product Name (产品名称)
+                TextColumn::make('product_name')
+                    ->label('Product Name')
+                    ->getStateUsing(function ($record) {
+                        $payload = json_decode($record->payload, true);
+                        if (isset($payload['data']['command'])) {
+                            $command = $payload['data']['command'];
+                            
+                            // 先正则匹配出 Service ID
+                            if (preg_match('/"App\\\\Models\\\\Service";s:2:"id";i:(\d+);/', $command, $matches)) {
+                                $serviceId = $matches[1];
+                                
+                                // 去数据库中查找这个 Service，并获取关联的 Product 名称
+                                // 使用 \App\Models\Service 引入模型
+                                $service = \App\Models\Service::find($serviceId);
+                                
+                                // 如果查到了 Service 且关联了 Product，返回产品名，否则返回提示
+                                return $service?->product?->name ?? 'Unknown / Deleted';
+                            }
+                        }
+                        return '-';
+                    })
+                    ->searchable(false)
+                    ->sortable(false),
+                    
+                    
                 TextColumn::make('payload')->formatStateUsing(function ($state) {
                     $state = json_decode($state);
 
