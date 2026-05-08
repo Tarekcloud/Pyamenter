@@ -355,6 +355,26 @@ class Virtualizor extends Server
             'value' => $hostname,
         ]);
 
+        // Attempt to fetch IP immediately if available, though it might take time to assign
+        $vpsIp = 'Pending';
+        if (isset($response['newvs']['ips']) && !empty($response['newvs']['ips'])) {
+            // Virtualizor sometimes returns IPs in a nested array or comma-separated list
+            $ips = $response['newvs']['ips'];
+            if (is_array($ips)) {
+                 $vpsIp = current($ips);
+            } else {
+                 // Assuming it might be comma separated if not array
+                 $ipList = explode(',', $ips);
+                 $vpsIp = trim($ipList[0]);
+            }
+            
+             $service->properties()->updateOrCreate(['key' => 'vps_ip'], [
+                'name' => 'VPS IP',
+                'value' => $vpsIp,
+            ]);
+        }
+
+
         $response['newvs']['pass'] = $password;
 
         return [
@@ -394,6 +414,7 @@ class Virtualizor extends Server
         }
 
         $service->properties()->where('key', 'server_id')->delete();
+        $service->properties()->where('key', 'vps_ip')->delete(); // Also cleanup IP
 
         return true;
     }
@@ -405,6 +426,48 @@ class Virtualizor extends Server
         }
         $hostname = $properties['hostname'] ?? $settings['hostname'] ?? 'Unknown';
         $vpsId = $properties['server_id'];
+        
+        $vpsIp = 'Fetching...';
+
+        // Check if IP is already stored in properties to avoid API call on every page load
+        if (isset($properties['vps_ip'])) {
+            $vpsIp = $properties['vps_ip'];
+        } else {
+            // Attempt to fetch IP from Virtualizor API if not stored
+            try {
+                // Fetch specific VPS info
+                $vsResp = $this->request('vs', 'get', ['vpsid' => $vpsId]);
+                
+                // Virtualizor API structure for listing VPS might vary slightly, 
+                // but usually, it returns an array of vs or specific info.
+                // Assuming 'vs' endpoint with vpsid parameter returns details under that ID or list.
+                if (!empty($vsResp['vs'])) {
+                     $vpsData = current($vsResp['vs']); // Get the first (and should be only) VPS
+                     
+                     if (isset($vpsData['ips']) && !empty($vpsData['ips'])) {
+                         if(is_array($vpsData['ips'])) {
+                             // Assuming standard format where ips is an array
+                             $ipData = current($vpsData['ips']); // Might be nested depending on Virtualizor version
+                             $vpsIp = is_array($ipData) && isset($ipData['ip']) ? $ipData['ip'] : (is_string($ipData) ? $ipData : 'N/A');
+                         } else {
+                             // Sometimes it's a string
+                             $vpsIp = $vpsData['ips'];
+                         }
+                         
+                         // Store it so we don't fetch every time
+                         $service->properties()->updateOrCreate(['key' => 'vps_ip'], [
+                            'name' => 'VPS IP',
+                            'value' => $vpsIp,
+                        ]);
+                     } else {
+                         $vpsIp = 'No IP Assigned';
+                     }
+                }
+            } catch (Exception $e) {
+                 $vpsIp = 'Error Fetching';
+            }
+        }
+
 
         return [
             [
@@ -419,7 +482,7 @@ class Virtualizor extends Server
             ],
             [
                 'type' => 'button',
-                'label' => 'VPS ID: ' . $vpsId,
+                'label' => 'VPS IP: ' . $vpsIp, // Changed from VPS ID to VPS IP
                 'function' => 'displayOnly', 
             ],
         ];
