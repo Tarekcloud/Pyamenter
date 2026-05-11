@@ -275,7 +275,7 @@
                             {{ __('product.in_stock') }}
                             <span class="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-neutral/10"
                                 :class="viewMode === 'available' ? 'bg-success/10 text-success' : 'text-color-muted'">
-                                {{ $products->filter(fn($p) => $p->stock !== 0 && $p->price()->available)->count() }}
+                                {{ $products->filter(fn($p) => ($p->stock === null || $p->stock > 0) && $p->price()->available)->count() }}
                             </span>
                         </button>
 
@@ -286,7 +286,7 @@
                             Out of Stock
                             <span class="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-neutral/10"
                                 :class="viewMode === 'unavailable' ? 'bg-error/10 text-error' : 'text-color-muted'">
-                                {{ $products->filter(fn($p) => $p->stock === 0 || !$p->price()->available)->count() }}
+                                {{ $products->filter(fn($p) => ($p->stock !== null && $p->stock <= 0) || !$p->price()->available)->count() }}
                             </span>
                         </button>
 
@@ -303,7 +303,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" x-ref="productsContainer">
                     @foreach ($products as $index => $product)
                         @php
-                            $isAvailable = ($product->stock !== 0) && $product->price()->available;
+                            $isAvailable = ($product->stock === null || $product->stock > 0) && $product->price()->available;
                             $pattern = '/!([a-zA-Z0-9_]+)=([^\r\n<]+)/';
                             $rawDescription = $product->description ?? '';
                             
@@ -360,10 +360,12 @@
                                             <p class="text-2xl font-bold {{ $isAvailable ? 'text-primary' : 'text-color-muted line-through' }} mb-2">
                                                 {{ $product->price()->formatted->price }}
                                             </p>
-                                            @if($product->stock == null)
-                                                <div class="text-xs text-color-muted">
-                                                    {{ $product->stock }} in stock
-                                                </div>
+                                            @if($product->stock === null || $product->stock >= 11)
+                                                <div class="text-xs text-green-500">In stock</div>
+                                            @elseif($product->stock > 0 && $product->stock < 6)
+                                                <div class="text-xs font-bold text-red-500">Almost out of stock</div>
+                                            @elseif($product->stock >= 6 && $product->stock < 11)
+                                                <div class="text-xs font-medium text-amber-500">Low stock</div>
                                             @endif
                                         </div>
                                     </div>
@@ -474,10 +476,12 @@
                                             <p class="text-2xl font-bold {{ $isAvailable ? 'text-primary' : 'text-color-muted line-through' }}">
                                                 {{ $product->price()->formatted->price }}
                                             </p>
-                                            @if($product->stock !== null)
-                                                <div class="text-xs text-color-muted font-medium">
-                                                    {{ $product->stock }} in stock
-                                                </div>
+                                            @if($product->stock === null || $product->stock >= 11)
+                                                <div class="text-xs text-green-500 font-medium">In stock</div>
+                                            @elseif($product->stock > 0 && $product->stock < 6)
+                                                <div class="text-xs font-bold text-red-500">Almost out of stock</div>
+                                            @elseif($product->stock >= 6 && $product->stock < 11)
+                                                <div class="text-xs font-medium text-amber-500">Low stock</div>
                                             @endif
                                         </div>
                                         
